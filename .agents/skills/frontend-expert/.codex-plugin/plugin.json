@@ -1,0 +1,21 @@
+{
+  "name": "frontend-expert",
+  "version": "2.4.8",
+  "description": "Evidence-led frontend UI quality — judgment, tokens, typography, color, surfaces, content, responsive, motion, accessibility, performance, and testing.",
+  "author": {
+    "name": "sukirman1901",
+    "url": "https://github.com/sukirman1901"
+  },
+  "homepage": "https://github.com/sukirman1901/frontend-expert",
+  "repository": "https://github.com/sukirman1901/frontend-expert",
+  "license": "MIT",
+  "skills": "./skills/",
+  "hooks": {
+    "hooks": {}
+  },
+  "interface": {
+    "displayName": "Frontend Expert",
+    "shortDescription": "Senior FE judgment + token-first UI that prevents AI aesthetic slop.",
+    "category": "Productivity"
+  }
+}

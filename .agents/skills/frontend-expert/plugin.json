@@ -1,0 +1,56 @@
+{
+  "name": "frontend-expert",
+  "version": "2.4.8",
+  "description": "Evidence-led frontend UI quality — judgment, foundations, tokens, typography, color, surfaces, content, responsive, motion, a11y, performance, and testing.",
+  "skills": [
+    "skills/frontend-expert",
+    "skills/design-direction",
+    "skills/prototype",
+    "skills/design-foundations",
+    "skills/tokens",
+    "skills/design-typography",
+    "skills/design-color",
+    "skills/design-surfaces",
+    "skills/content-design",
+    "skills/components",
+    "skills/responsive",
+    "skills/anti-slop-design",
+    "skills/anti-slop-code",
+    "skills/polish",
+    "skills/accessibility",
+    "skills/performance",
+    "skills/motion",
+    "skills/motion-inspection",
+    "skills/testing",
+    "skills/quality-loop",
+    "skills/webgl",
+    "skills/monitoring",
+    "skills/app-shell",
+    "skills/data-fetching",
+    "skills/forms",
+    "skills/architecture",
+    "skills/seo",
+    "skills/marketing",
+    "skills/fidelity",
+    "skills/devtools",
+    "skills/design-vocabulary",
+    "skills/engineering-vocabulary",
+    "skills/skill-authoring"
+  ],
+  "agents": [
+    "agents/ui-developer.md",
+    "agents/design-reviewer.md",
+    "agents/test-engineer.md"
+  ],
+  "commands": [
+    "commands/ui.md",
+    "commands/design.md",
+    "commands/audit.md",
+    "commands/test-ui.md",
+    "commands/polish.md"
+  ],
+  "hooks": [
+    "hooks/SESSION-START.md",
+    "hooks/ANTI-SLOP.md"
+  ]
+}

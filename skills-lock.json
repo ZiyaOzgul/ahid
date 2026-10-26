@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "skills": {
+    "3d-web-experience": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/creative-design/3d-web-experience/SKILL.md",
+      "computedHash": "ba4a54a164735ea7cd1b3561853e1bd83c143713d7202bbd7e67cc8a24e37ff8"
+    },
+    "code-reviewer": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-reviewer/SKILL.md",
+      "computedHash": "88575bf85b4186e5b7ebb6d7b38caeea1aada3581c9d5b1aa835433fadbf35b3"
+    },
+    "frontend-expert": {
+      "source": "sukirman1901/frontend-expert",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "9b28efb9753a0ae110be4f32baa33991e4bad94ec29f408ec2844d2ae832519d"
+    },
+    "sql-optimization": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/sql-optimization/SKILL.md",
+      "computedHash": "47c930907f25d67454ac8c2d155785eae3dce72242960d0c0e9ebf2ced9cd231"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "af1844ade632808fc0c15cf2db87daf3b2431c5262dc8a0c3ea7d70880fadf91"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "128fac78002d916c8ca908245d398e634f540d8bcf20915b2b2359aeb18eba59"
+    },
+    "ui-ux-designer": {
+      "source": "sickn33/agentic-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui-ux-designer/SKILL.md",
+      "computedHash": "776244d5339b64e0b8926e3d17437f60e6b4a7dab75e5f6cadd9513d511e66ba"
+    }
+  }
+}

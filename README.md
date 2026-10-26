@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AHİD — Ankara Halkla İlişkiler Derneği Resmi Web Platformu
 
-## Getting Started
+1990 yılında başkentte kurulan Ankara Halkla İlişkiler Derneği (AHİD) kurumsal web platformu ve yönetim bilgi sistemi.
 
-First, run the development server:
+## 🚀 Teknolojik Altyapı
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Framework:** [Next.js 16](https://nextjs.org) (App Router, Turbopack)
+- **Kütüphane:** [React 19](https://react.dev)
+- **Stil & Tasarım:** [Tailwind CSS v4](https://tailwindcss.com) + Material Symbols Outlined
+- **Veritabanı & Depolama:** [Supabase](https://supabase.com) (PostgreSQL, Storage, RLS)
+- **Kimlik & Güvenlik:** DERBİS entegrasyon protokolü, 256-bit SSL mimarisi
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📂 Sayfa & Modül Yapısı
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **`/`** — Ana Sayfa (Canlı sayaçlar, hero, gündem vitrini, stratejik paydaşlar)
+- **`/kurumsal`** — Tarihçe, misyon, vizyon, tüzük ve organizasyon
+- **`/baskanlar-ve-kurullar`** — 1990'dan bugüne genel başkanlar, danışma, denetim, onur kurulları ve genç konsey
+- **`/haberler`** & **`/haberler/[slug]`** — Haberler, basın bültenleri ve genel kurul duyuruları
+- **`/etkinlikler`** & **`/etkinlikler/[id]`** — Etkinlik takvimi, zirve ve başvuru kayıt formu
+- **`/yayinlar`** & **`/yayinlar/[slug]`** — Usta'ya Saygı dizisi, hakemli raporlar ve makaleler
+- **`/kaynaklar`** — Tüzük, etik yönetmelikler, resmi belgeler ve barkodlu canlı belge doğrulama servisi
+- **`/uye-paneli`** — Dijital üye kimlik kartı, aidat sicili, e-makbuz ve başvuru takip
+- **`/uyelik`** — Akreditasyon ve online üyelik başvuru masası
+- **`/iletisim`** — Genel merkez iletişim, randevu ve protokol mesaj masası
+- **`/admin`** & **`/admin/medya`** — Yönetim portalı, dinamik CMS değişkenleri ve Supabase medya kütüphanesi yöneticisi
+- **`/login`** — Çift kanallı güvenli giriş kapısı (Yönetici & Üye Portalı)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Kurulum & Çalıştırma
 
-## Learn More
+1. **Bağımlılıkları Yükleyin:**
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Ortam Değişkenlerini Tanımlayın:**
+   `.env.example` dosyasını `.env.local` olarak kopyalayın ve Supabase bağlantı bilgilerinizi girin:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Geliştirme Sunucusunu Başlatın:**
+   ```bash
+   npm run dev
+   ```
+   Tarayıcınızda [http://localhost:3000](http://localhost:3000) adresine gidin.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Üretim Derlemesi:**
+   ```bash
+   npm run build
+   npm run start
+   ```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ⚖️ Lisans & Telif
+© 1990 — 2026 Ankara Halkla İlişkiler Derneği (AHİD). Tüm hakları saklıdır.

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+
+<html lang="tr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-low": "#f0f3ff", "secondary-fixed": "#d9e2ff", "inverse-surface": "#253144", "on-surface": "#101c2e", "gold-light": "#FDE68A", "surface-container-high": "#dee8ff", "tertiary-fixed-dim": "#ffb77d", "inverse-primary": "#b1c5ff", "background": "#f9f9ff", "tertiary": "#472300", "on-primary": "#ffffff", "error-container": "#ffdad6", "on-tertiary-fixed": "#2f1500", "surface-variant": "#d7e3fc", "on-surface-variant": "#434652", "surface-dim": "#cfdaf3", "primary-fixed-dim": "#b1c5ff", "on-tertiary-fixed-variant": "#6e3900", "on-secondary-container": "#003277", "primary-fixed": "dae2ff", "on-primary-container": "#8dadff", "on-primary-fixed": "#001947", "gold-deep": "#92400E", "outline": "#747783", "outline-variant": "#c4c6d3", "surface": "#f9f9ff", "surface-container-lowest": "#ffffff", "on-secondary-fixed-variant": "#00429a", "surface-bright": "#f9f9ff", "tertiary-container": "#673500", "slate-dark": "#334155", "primary-container": "#0b3d91", "surface-canvas": "#F8FAFC", "on-background": "#101c2e", "error": "#ba1a1a", "surface-container": "#e7eeff", "inverse-on-surface": "#ecf1ff", "secondary-container": "#6d9bff", "on-error": "#ffffff", "on-primary-fixed-variant": "#144296", "slate-muted": "#64748B", "surface-ice": "#EBF2FC", "on-secondary-fixed": "#001944", "secondary-fixed-dim": "#afc6ff", "tertiary-fixed": "#ffdcc3", "on-tertiary": "#ffffff", "on-secondary": "#ffffff", "surface-tint": "#345baf", "on-error-container": "#93000a", "primary": "#002869", "on-tertiary-container": "#fe942d", "surface-container-highest": "#d7e3fc", "secondary": "#225aba" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "margin-mobile": "1rem", "gutter-desktop": "2rem", "gutter": "1.5rem", "margin-desktop": "3.5rem", "space-md": "1rem", "space-lg": "1.5rem", "gutter-mobile": "1rem", "space-3xl": "6rem", "margin": "1.5rem", "margin-tablet": "2rem", "space-2xl": "4rem", "space-xs": "0.25rem", "space-xl": "2.5rem", "space-sm": "0.5rem" }, "fontFamily": { "body-md": ["Inter"], "display-hero": ["Plus Jakarta Sans"], "label-sm": ["Inter"], "body-lg": ["Inter"], "label-md": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "display-hero-mobile": ["Plus Jakarta Sans"], "caption-caps": ["Inter"] }, "fontSize": { "body-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "display-hero": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "800" }], "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "400" }], "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.025em", "fontWeight": "700" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "display-hero-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "caption-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700" }] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_4px_20px_rgba(11,61,145,0.06)]"><div class="bg-primary text-on-primary"><div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop h-10 flex items-center justify-between font-label-sm text-label-sm"><div class="flex items-center gap-space-lg"><a class="flex items-center gap-space-xs hover:text-gold-light transition-colors" href="mailto:info@ahid.org.tr"><span class="material-symbols-outlined text-base">mail</span><span class="">info@ahid.org.tr</span></a><div class="hidden md:flex items-center gap-space-xs text-on-primary-container"><span class="material-symbols-outlined text-base">location_on</span><span class="">Çankaya, Ankara | Genel Merkez</span></div></div><div class="flex items-center gap-space-md"><div class="hidden sm:flex items-center gap-space-sm pr-space-md"><a class="p-1 text-on-primary hover:text-gold-light transition-colors" href="#" title="Resmi Bildiriler"><span class="material-symbols-outlined text-base">feed</span></a><a class="p-1 text-on-primary hover:text-gold-light transition-colors" href="#" title="İletişim Bülteni"><span class="material-symbols-outlined text-base">alternate_email</span></a><a class="p-1 text-on-primary hover:text-gold-light transition-colors" href="#" title="Etkinlik Takvimi"><span class="material-symbols-outlined text-base">event_note</span></a></div><a class="inline-flex items-center gap-space-xs bg-primary-container text-on-primary hover:bg-secondary px-3 py-1 rounded transition-colors" data-path="portal-girisi" href="#"><span class="material-symbols-outlined text-sm">vpn_key</span><span class="">Üye Girişi / Portal</span></a></div></div></div><div class="h-20 max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><a class="flex items-center gap-3" data-path="ana-sayfa" href="#"><img alt="AHİD Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUVefFrV3KExtXwBoSL59qj1P1NTanfng_maXmRVOKsP-14S8QXt-Y6ajYo7ufP2wNjVuoMS3FvJMSlYSNaae8l5CEbUmxRM8o8bcsoiuXnS8yhtSFTPz8lx7bbeeumYJr8Cg3iBaOs-GmFHnJCKvPYeRyblrbxc8TlNR31ZdjLLECVSZCRdm-2qqiRZrP3hgKGyozSoIyPNRKUIt3JyxXAlVVRngz8OR89qQyzwaCLgh8tHAooLI8"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold leading-tight">AHİD</span><span class="font-caption-caps text-caption-caps text-slate-muted uppercase tracking-wider">Ankara Halkla İlişkiler Derneği | 1990</span></div></a></div><nav class="hidden xl:flex items-center gap-space-md font-label-md text-label-md" data-active-classes="text-primary font-bold bg-surface-ice rounded px-3 py-1.5"><a class="text-on-surface-variant hover:text-primary transition-colors px-2 py-1" data-path="ana-sayfa" href="#">Ana Sayfa</a><a class="text-on-surface-variant hover:text-primary transition-colors px-2 py-1" data-path="kurumsal" href="#">Kurumsal</a><a class="text-on-surface-variant hover:text-primary transition-colors px-2 py-1" data-path="haberler-ve-duyurular" href="#">Haberler &amp; Duyurular</a><a class="text-on-surface-variant hover:text-primary transition-colors px-2 py-1" data-path="kose-yazilari" href="#">Usta'ya Saygı</a><a class="text-on-surface-variant hover:text-primary transition-colors px-2 py-1" data-path="etkinlikler-ve-oduller" href="#">Etkinlikler &amp; Ödüller</a><a class="text-on-surface-variant hover:text-primary transition-colors px-2 py-1" data-path="uyelik" href="#">Üyelik</a><a class="text-on-surface-variant hover:text-primary transition-colors px-2 py-1" data-path="iletisim" href="#">İletişim</a></nav><div class="flex items-center gap-space-sm"><button aria-label="Portalda Ara" class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-ice rounded transition-colors" type="button"><span class="material-symbols-outlined">search</span></button><a class="hidden sm:inline-flex items-center justify-center bg-[#0b3d91] hover:bg-[#082b66] text-white font-semibold font-label-md text-label-md px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 active:scale-95" data-path="uyelik-basvurusu" href="#">Üye Olun</a><div class="pl-space-xs"><a class="flex items-center" data-path="uye-paneli" href="#" title="Üye Profili"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20 hover:ring-primary transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDDkfzhg43AW2pgoCmO6b4plZ0FAH4dRT9DvoGhLowRiyITw1JwHRhidMYDuamXacDmzRzRs6UKB0rbXb3rbnuZD1PyozjtAiMyPsjoKk78f-vBAdXRsqXOQjkAbptPC_w7aul58Il2EitMfLCIrmQIZq8KiJyuMOMWHQyd_2Gr_283JWqHMq8KAiweyPf04R4P_QKNCvEBzMIFI6nn1afOT8PI-mHs1db3wbFQw0U7EG-Vf-HYYei"/></a></div></div></div></header><main class="w-full pt-[7.5rem] bg-surface min-h-[calc(100vh-28rem)]"><div class="flex flex-col w-full">
+<!-- Editorial Breadcrumb & Context Header -->
+<section class="w-full bg-surface-container-low py-space-lg">
+<div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop">
+<nav aria-label="Ekmek Kırıntısı" class="flex items-center gap-space-xs font-label-sm text-label-sm text-slate-muted mb-space-sm">
+<a class="hover:text-primary transition-colors flex items-center gap-1" data-path="ana-sayfa" href="#">
+<span class="material-symbols-outlined text-sm">home</span>
+<span>Ana Sayfa</span>
+</a>
+<span class="text-outline-variant">/</span>
+<a class="hover:text-primary transition-colors" data-path="kurumsal" href="#">Kurumsal</a>
+<span class="text-outline-variant">/</span>
+<span class="text-primary font-semibold">Başkanlarımız &amp; Kurullarımız</span>
+</nav>
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md">
+<div>
+<div class="inline-flex items-center gap-2 bg-surface-ice text-primary px-3 py-1 rounded-full font-caption-caps text-caption-caps mb-space-xs uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+            Kurumsal Bellek &amp; Yönetişim Kronolojisi
+          </div>
+<h1 class="font-headline-xl text-headline-xl text-primary font-bold tracking-tight">
+            1990'dan Bugüne: Başkanlarımız ve Kurul Heyetlerimiz
+          </h1>
+</div>
+<p class="font-body-md text-body-md text-slate-muted max-w-xl leading-relaxed">
+          Başkent iletişim ekolünün temellerini atan, Türkiye'de kurumsal itibar ve kamu ilişkileri standartlarını belirleyen liderlerimizin 35 yıllık saygın mirası.
+        </p>
+</div>
+</div>
+</section>
+<!-- Interactive Section Tabs -->
+<section class="w-full bg-surface-container-lowest sticky top-[7.5rem] z-30 shadow-sm">
+<div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop">
+<div class="flex items-center gap-space-sm overflow-x-auto no-scrollbar py-space-sm" id="tab-nav">
+<button class="tab-btn px-4 py-2.5 rounded-lg font-label-md text-label-md whitespace-nowrap bg-primary text-on-primary transition-all duration-200 flex items-center gap-2" id="tab-btn-baskanlar" onclick="switchTab('baskanlar')">
+<span class="material-symbols-outlined text-sm">history_edu</span>
+<span>Geçmiş Dönem Başkanları (Kronoloji)</span>
+</button>
+<button class="tab-btn px-4 py-2.5 rounded-lg font-label-md text-label-md whitespace-nowrap bg-surface-container-low text-on-surface hover:bg-surface-ice transition-all duration-200 flex items-center gap-2" id="tab-btn-danisma" onclick="switchTab('danisma')">
+<span class="material-symbols-outlined text-sm">balance</span>
+<span>Yüksek Danışma Kurulu</span>
+</button>
+<button class="tab-btn px-4 py-2.5 rounded-lg font-label-md text-label-md whitespace-nowrap bg-surface-container-low text-on-surface hover:bg-surface-ice transition-all duration-200 flex items-center gap-2" id="tab-btn-denetim" onclick="switchTab('denetim')">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span>Denetim Kurulu</span>
+</button>
+<button class="tab-btn px-4 py-2.5 rounded-lg font-label-md text-label-md whitespace-nowrap bg-surface-container-low text-on-surface hover:bg-surface-ice transition-all duration-200 flex items-center gap-2" id="tab-btn-onur" onclick="switchTab('onur')">
+<span class="material-symbols-outlined text-sm">military_tech</span>
+<span>Onur Kurulu Üyeleri</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Main Viewport -->
+<div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop py-space-2xl w-full">
+<!-- TAB 1: KRONOLOJİK BAŞKANLAR -->
+<div class="flex flex-col gap-space-2xl" id="panel-baskanlar">
+<!-- Kurucu Başkan Spotlight (Asymmetric Hero Card) -->
+<div class="relative bg-gradient-to-br from-primary to-inverse-surface rounded-xl overflow-hidden shadow-xl text-on-primary">
+<div class="absolute -right-20 -top-20 w-96 h-96 bg-secondary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 items-center">
+<div class="lg:col-span-5 p-space-lg lg:p-space-xl flex flex-col justify-center">
+<div class="relative mx-auto lg:mx-0 w-64 h-80 rounded-lg overflow-hidden shadow-2xl bg-surface-dim">
+<img alt="Kurucu Genel Başkan Portresi" class="w-full h-full object-cover grayscale contrast-125" data-alt="Black and white distinguished vintage portrait of a founding president of Ankara Public Relations Association from 1990, wearing a formal suit and necktie, dignified intellectual posture, soft studio lighting, high archival contrast." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoHPOaOfnwcSDpdASaNt1JxK5SldD7l2JRq5EEW2HL2_2d0cZfzmfW54EtMOws6RRH4a1xpYmOcGOziey7W_Mw5FEWBhXsUEmo9mzYg1OdRMzeuYBUcjH1TPG6GOeV_t5DbyByjuV9cNPyFZ4PsHlUmklG0qf_qXx0n5hT4exO9GH74FqJCWU48Ix7rVtz__xXS_aZJ-DzYa5UyUJeJ7ziOwro2VvEopmc2HMMTfY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-3 left-3 bg-tertiary-container/90 text-gold-light px-3 py-1 rounded font-caption-caps text-caption-caps uppercase tracking-wider flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-xs">star</span>
+                Kurucu Genel Başkan
+              </div>
+</div>
+</div>
+<div class="lg:col-span-7 p-space-lg lg:p-space-xl lg:pl-0 flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="px-3 py-1 bg-surface-container-highest/20 text-gold-light font-label-sm text-label-sm rounded-full">
+                1990 – 1994 Görev Dönemi
+              </span>
+<span class="font-caption-caps text-caption-caps text-inverse-primary tracking-wider uppercase">
+                Sicil No: 001
+              </span>
+</div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-primary">
+              Prof. Dr. İlhan Cemil ERSOY
+            </h2>
+<p class="font-body-md text-body-md text-inverse-primary font-medium">
+              Ankara Üniversitesi İletişim Fakültesi Emekli Öğretim Üyesi | Türkiye Halkla İlişkiler Akademisi Öncüsü
+            </p>
+<blockquote class="my-space-sm p-space-md bg-white/5 rounded-lg font-body-md text-body-md italic text-surface-container leading-relaxed">
+              "Başkent Ankara; yalnızca kararların alındığı idari merkez değil, toplum ile devlet, kurum ile yurttaş arasındaki saydam ve etik diyaloğun vicdanıdır."
+            </blockquote>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-sm pt-space-xs font-body-sm text-body-sm text-inverse-on-surface">
+<div class="bg-white/5 p-3 rounded">
+<span class="text-gold-light font-bold block text-sm">İlkler</span>
+<span>AHİD Tüzüğü &amp; Ankara Deklarasyonu</span>
+</div>
+<div class="bg-white/5 p-3 rounded">
+<span class="text-gold-light font-bold block text-sm">Akreditasyon</span>
+<span>Kamu İletişim Komisyonu Tesisi</span>
+</div>
+<div class="bg-white/5 p-3 rounded">
+<span class="text-gold-light font-bold block text-sm">Kalıcı Eser</span>
+<span>Halkla İlişkiler Süreli Bülteni</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Chronology Timeline Grid Section -->
+<div class="flex flex-col gap-space-lg">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div>
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase tracking-wider block">Gelişim &amp; Dönüşüm</span>
+<h3 class="font-headline-md text-headline-md text-primary font-bold">Dönem Genel Başkanları</h3>
+</div>
+<div class="flex items-center gap-space-xs text-slate-muted font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-sm text-primary">timeline</span>
+<span>Kronolojik Sıralama (1994 - 2025)</span>
+</div>
+</div>
+<!-- Timeline Cards Mosaic -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-lg">
+<!-- Term 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded bg-surface-ice text-primary font-label-sm text-label-sm font-semibold">
+                  1994 – 1998
+                </span>
+<span class="font-caption-caps text-caption-caps text-slate-muted">II. &amp; III. Dönem</span>
+</div>
+<div class="flex gap-space-md items-center">
+<div class="w-16 h-16 rounded-full overflow-hidden shrink-0 bg-surface-container">
+<img alt="Dönem Başkanı Portresi" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Distinguished Turkish female senior executive in 1990s formal navy blazer, authoritative expression, professional corporate headshot photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0L74m7lZ92jTNXNgTbmFvks8pLrRf7tW4yQhgbJ0ssj9ImEdSOaZQ2BzLUsPTGUUmu6zK_WPR7A9UO6oc8LXW_P4MWZEOGcf5X9R9xxLbQxEzAxykeKSPMZB46evgFNLXv3QOyiuBsZPULiNQZftMOhTbijNTj0mVk_ndnvGaiVjMD-_Kl0NufYASxMnrseVoZjC592kvI3nNDOCsdq87gQ2nglKIiNDL-PsMbAw"/>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary transition-colors">
+                    Suna TANER BAYDAR
+                  </h4>
+<p class="font-body-sm text-body-sm text-slate-muted">
+                    Devlet Planlama Teşkilatı İletişim Müşaviri
+                  </p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-slate-dark leading-relaxed">
+                Kamu diplomasisinde halkla ilişkiler vizyonunun kurumsallaşması ve ilk Ulusal Kamuoyu ve Medya İlişkileri Çalıştayı'nın icra edilmesi.
+              </p>
+</div>
+<div class="pt-space-md mt-space-md bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg py-2.5 rounded-b-xl flex items-center justify-between text-slate-muted font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-primary">menu_book</span>
+                4 Resmi Rapor
+              </span>
+<span class="text-primary font-medium">Kamu Sektörü Ağı</span>
+</div>
+</div>
+<!-- Term 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded bg-surface-ice text-primary font-label-sm text-label-sm font-semibold">
+                  1998 – 2003
+                </span>
+<span class="font-caption-caps text-caption-caps text-slate-muted">IV. &amp; V. Dönem</span>
+</div>
+<div class="flex gap-space-md items-center">
+<div class="w-16 h-16 rounded-full overflow-hidden shrink-0 bg-surface-container">
+<img alt="Dönem Başkanı Portresi" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Editorial portrait of an experienced Turkish media and communications director in spectacles and dark charcoal suit, academic backdrop, dignified smile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsTwSGClkGsoH4gLAyZ5Wm5Esv9z5XYl0XgYDpFXE2bHy6BY8Ph2T2M7kwAVXzTL9GL4ZUttxh0Z5LL0ZHNjIfzXsx_Po3LvjwAZ09cG74sX5wGQ06hmr7eKqDDXDRsfr-z2tP93XwUKhnlnuQn9eBgZQv0u4hH5kd5NCTw0_Yiyc6llQYts0-PJusM7uCV4Arcm2Okk4SWFHbsmRsL2q4LHrx93VFhyHV4lL0fQM"/>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary transition-colors">
+                    Dr. Metin ATABEK
+                  </h4>
+<p class="font-body-sm text-body-sm text-slate-muted">
+                    Hacettepe Üniversitesi İletişim Fakültesi
+                  </p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-slate-dark leading-relaxed">
+                Avrupa Halkla İlişkiler Konfederasyonu (CERP) ile ilk resmi temaslar ve Ankara İletişim Gençlik Kolları teşkilatının tesisi.
+              </p>
+</div>
+<div class="pt-space-md mt-space-md bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg py-2.5 rounded-b-xl flex items-center justify-between text-slate-muted font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-primary">public</span>
+                Uluslararası Entegrasyon
+              </span>
+<span class="text-primary font-medium">Akademi İş Birliği</span>
+</div>
+</div>
+<!-- Term 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded bg-surface-ice text-primary font-label-sm text-label-sm font-semibold">
+                  2003 – 2008
+                </span>
+<span class="font-caption-caps text-caption-caps text-slate-muted">VI. &amp; VII. Dönem</span>
+</div>
+<div class="flex gap-space-md items-center">
+<div class="w-16 h-16 rounded-full overflow-hidden shrink-0 bg-surface-container">
+<img alt="Dönem Başkanı Portresi" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Portrait of an esteemed Turkish female PR leader in early 2000s corporate attire, confident professional look, Ankara institutional setting in soft focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBScjwjdmAr8oo-GLcJCFUMlA1q48b4MR1OoVT5vkV0Z_PNuWuaPIyouxnQwj4f8bHpLTk4uwVo-LqF868GtcSBiaz_gh-bbD5XQIzwe8xZ4eLCprrfQCzQEQRTcptYr2NnIid42F2FnHJmuOrQH2faipwGfMl_XRDyMlFFVIg-EWsjBNjJiasqXAly1NAxTfHL0tjSoxeJlmPe8RV-8W5Sr7cJx7ljeB1XNVQrbg"/>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary transition-colors">
+                    Nihal GÜNER KALKAVAN
+                  </h4>
+<p class="font-body-sm text-body-sm text-slate-muted">
+                    Kalkavan Stratejik İletişim Ajansı Kurucusu
+                  </p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-slate-dark leading-relaxed">
+                Özel sektör, ajans dünyası ve başkent sanayi kuruluşları arasında entegre kriz iletişimi protokollerinin hazırlanması.
+              </p>
+</div>
+<div class="pt-space-md mt-space-md bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg py-2.5 rounded-b-xl flex items-center justify-between text-slate-muted font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-primary">campaign</span>
+                Ajans Birliği Sözleşmesi
+              </span>
+<span class="text-primary font-medium">Özel Sektör Ağı</span>
+</div>
+</div>
+<!-- Term 5 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded bg-surface-ice text-primary font-label-sm text-label-sm font-semibold">
+                  2008 – 2014
+                </span>
+<span class="font-caption-caps text-caption-caps text-slate-muted">VIII. &amp; IX. Dönem</span>
+</div>
+<div class="flex gap-space-md items-center">
+<div class="w-16 h-16 rounded-full overflow-hidden shrink-0 bg-surface-container">
+<img alt="Dönem Başkanı Portresi" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Editorial portrait of a senior communications strategist with silver hair in modern navy suit, thoughtful posture, warm executive studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6ZGnZXV7pzalPXef6jNzvvqDSodSy6ilzS0Lji5QiNyBE-JB6nDDX2UJaYOWprhTokaaqMW1cKxfuduCK926a1bsd4QfzegONy-M7PI2zCSzolkShRgYdPZp-paAOpHjvyt74rLECgXmqUJ8x7oEzqYV_U5RDfG2uaRo30mpWj4JSktY67QR-13NedhQZnO2nlzzvC_eLpxaM0o_EsIQ6pIsrCPfPQXiwn0PusQ0"/>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary transition-colors">
+                    Kemal Yalçın ÖZDEN
+                  </h4>
+<p class="font-body-sm text-body-sm text-slate-muted">
+                    TOBB Kurumsal İletişim Eski Direktörü
+                  </p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-slate-dark leading-relaxed">
+                AHİD Mesleki Etik Yasası'nın yeniden düzenlenmesi ve Başkent İletişim Zirvesi ödüllerinin yıllık gelenek haline getirilmesi.
+              </p>
+</div>
+<div class="pt-space-md mt-space-md bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg py-2.5 rounded-b-xl flex items-center justify-between text-slate-muted font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-primary">emoji_events</span>
+                Zirve &amp; Başarı Ödülleri
+              </span>
+<span class="text-primary font-medium">Etik Beyannamesi</span>
+</div>
+</div>
+<!-- Term 6 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded bg-surface-ice text-primary font-label-sm text-label-sm font-semibold">
+                  2014 – 2020
+                </span>
+<span class="font-caption-caps text-caption-caps text-slate-muted">X. &amp; XI. Dönem</span>
+</div>
+<div class="flex gap-space-md items-center">
+<div class="w-16 h-16 rounded-full overflow-hidden shrink-0 bg-surface-container">
+<img alt="Dönem Başkanı Portresi" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Modern corporate portrait of an academic female leader in elegant burgundy jacket, composed and intellectual gaze, architectural university library background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBB_RYMzRp5ST9T6KXeDXR-R7LoEc-KJzzADuOdpjoS0krXv0HkLkYgqS5Rq6gZheAoLAZSt8IwJHVK7Nf1UTiiZvGf00CDwMBNEMApoXRHzkajS2XXOg5m8zo99OBoM0n4MTzE3Pcs3wDRwAnMuNoLygBn3pcodwxyUgkju-QL_nsAgsMghhtJDDJNMu-dyUTa8UeGHRxaF7GeH5UxX0N-uvhsjSA5SLAX1MC4FnQ"/>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary transition-colors">
+                    Prof. Dr. Belma SEZGİN
+                  </h4>
+<p class="font-body-sm text-body-sm text-slate-muted">
+                    Gazi Üniversitesi İletişim Fakültesi Dekanı (E.)
+                  </p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-slate-dark leading-relaxed">
+                Dijital dönüşüm döneminde kamusal şeffaflık, sosyal medya etik standartları ve genç akademisyen mentorluk fonunun kuruluşu.
+              </p>
+</div>
+<div class="pt-space-md mt-space-md bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg py-2.5 rounded-b-xl flex items-center justify-between text-slate-muted font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-primary">school</span>
+                Mentorluk Programı
+              </span>
+<span class="text-primary font-medium">Dijital Etik Kılavuzu</span>
+</div>
+</div>
+<!-- Current Term / Placeholder for 2020 - Present -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded bg-surface-variant text-on-surface-variant font-label-sm text-label-sm font-bold">
+                  2020 – Günümüz
+                </span>
+<span class="font-caption-caps text-caption-caps text-gold-deep font-bold">Aktif Dönem</span>
+</div>
+<div class="flex gap-space-md items-center">
+<div class="w-16 h-16 rounded-full overflow-hidden shrink-0 bg-surface-container">
+<img alt="Mevcut Genel Başkan Portresi" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Modern professional Turkish male executive in sharp navy blazer with lapel pin, confident expression, contemporary corporate office in Ankara." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-5U_ZRvCtgOzaCocLV-u1BzHVLQOe0Rn3O0smYCQLkvffBLXMMkkwqfpyUeR8m1XDpo9yELxARfDRRfsJV9xc_1GAugu9Ikm_1yZYyKww7qpjo6LmDLTyfp2BkEE3WTagqGPCtI5rqOHohreNez2HuP-Fxlh_Bb06KrZ8cLdnC4NU_DkxNdWUR6oNknVUFurlbe3dh_V-yb-cxudPqqGKHp-N2lZ2Dgxy7iwkq9w"/>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-primary font-bold group-hover:text-secondary transition-colors">
+                    Hakan DİKMEOĞLU
+                  </h4>
+<p class="font-body-sm text-body-sm text-slate-muted">
+                    Yönetim Kurulu Genel Başkanı
+                  </p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-slate-dark leading-relaxed">
+                AHİD 35. Yıl Vizyonu, Kamu-Özel Hibrit İletişim Zirveleri ve Genç İletişimci Burs Fonu kapsamındaki yenilikçi yönetişim hamleleri.
+              </p>
+</div>
+<div class="pt-space-md mt-space-md bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg py-2.5 rounded-b-xl flex items-center justify-between text-slate-muted font-label-sm text-label-sm">
+<a class="text-primary font-semibold hover:underline flex items-center gap-1" data-path="yonetim-kurulu" href="#">
+<span>Mevcut Yönetim Heyetini İncele</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+<span class="text-gold-deep font-bold">XII. Dönem</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- TAB 2: YÜKSEK DANIŞMA KURULU -->
+<div class="hidden flex flex-col gap-space-xl" id="panel-danisma">
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm">
+<div class="max-w-3xl mb-space-lg">
+<span class="font-caption-caps text-caption-caps text-gold-deep font-bold uppercase tracking-wider block">Stratejik İstişare Heyeti</span>
+<h2 class="font-headline-lg text-headline-lg text-primary font-bold mb-2">Yüksek Danışma Kurulu</h2>
+<p class="font-body-md text-body-md text-slate-muted">
+            Derneğimizin stratejik kararlarında yol gösteren, kamu diplomasisi, akademi ve sektör deneyimini temsil eden kıdemli heyet üyelerimiz.
+          </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-start gap-space-md">
+<div class="w-12 h-12 rounded bg-surface-ice flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Kurul Başkanı</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">Prof. Dr. Korkmaz TUNA</h4>
+<p class="font-body-sm text-body-sm text-primary font-medium">ODTÜ İktisadi ve İdari Bilimler Fakültesi</p>
+<p class="font-body-sm text-body-sm text-slate-muted mt-1">Kamu Yönetimi ve İtibar Stratejisi</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-start gap-space-md">
+<div class="w-12 h-12 rounded bg-surface-ice flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">campaign</span>
+</div>
+<div>
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Kurul Üyesi (Özel Sektör)</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">Ceyda ARSLAN ÖZTÜRK</h4>
+<p class="font-body-sm text-body-sm text-primary font-medium">Aselsan Kurumsal İletişim Direktörü</p>
+<p class="font-body-sm text-body-sm text-slate-muted mt-1">Savunma Sanayi &amp; Kriz İletişimi</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-start gap-space-md">
+<div class="w-12 h-12 rounded bg-surface-ice flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">newspaper</span>
+</div>
+<div>
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Kurul Üyesi (Basın Temsilcisi)</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">H. Tarık GÜVENDİK</h4>
+<p class="font-body-sm text-body-sm text-primary font-medium">Ankara Gazeteciler Cemiyeti YK Üyesi</p>
+<p class="font-body-sm text-body-sm text-slate-muted mt-1">Medya İlişkileri &amp; Parlamento Muhabirliği</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-start gap-space-md">
+<div class="w-12 h-12 rounded bg-surface-ice flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">school</span>
+</div>
+<div>
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Kurul Üyesi (Akademi)</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">Doç. Dr. Emel KARASU</h4>
+<p class="font-body-sm text-body-sm text-primary font-medium">Başkent Üniversitesi İletişim Fakültesi</p>
+<p class="font-body-sm text-body-sm text-slate-muted mt-1">Stratejik Halkla İlişkiler &amp; Marka Değeri</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-start gap-space-md">
+<div class="w-12 h-12 rounded bg-surface-ice flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">gavel</span>
+</div>
+<div>
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Kurul Üyesi (Hukuk Müşaviri)</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">Av. Burak ALİCAN</h4>
+<p class="font-body-sm text-body-sm text-primary font-medium">Ankara Barosu &amp; Bilişim Hukuku Derneği</p>
+<p class="font-body-sm text-body-sm text-slate-muted mt-1">Dernekler Mevzuatı &amp; KVKK Danışmanlığı</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-start gap-space-md">
+<div class="w-12 h-12 rounded bg-surface-ice flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">domain</span>
+</div>
+<div>
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Kurul Üyesi (STK Temsilcisi)</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">Sevilay GÖÇER</h4>
+<p class="font-body-sm text-body-sm text-primary font-medium">Türkiye Odalar Birliği Vakfı İletişim Direktörü</p>
+<p class="font-body-sm text-body-sm text-slate-muted mt-1">Sosyal Sorumluluk &amp; Sürdürülebilirlik</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- TAB 3: DENETİM KURULU -->
+<div class="hidden flex flex-col gap-space-xl" id="panel-denetim">
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm">
+<div class="max-w-3xl mb-space-lg">
+<span class="font-caption-caps text-caption-caps text-primary font-bold uppercase tracking-wider block">Şeffaflık &amp; İdari Denetim</span>
+<h2 class="font-headline-lg text-headline-lg text-primary font-bold mb-2">Denetim Kurulu (Asil &amp; Yedek)</h2>
+<p class="font-body-md text-body-md text-slate-muted">
+            T.C. Dernekler Mevzuatı ve AHİD Tüzüğü uyarınca idari, mali ve operasyonel süreçlerin periyodik denetimini üstlenen bağımsız heyetimiz.
+          </p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+<!-- Asil Üyeler -->
+<div class="bg-surface-container-low p-space-lg rounded-xl">
+<div class="flex items-center justify-between pb-space-sm mb-space-md border-b border-outline-variant/30">
+<h3 class="font-headline-sm text-headline-sm text-primary font-bold flex items-center gap-2">
+<span class="material-symbols-outlined">verified</span>
+                Asil Denetim Heyeti
+              </h3>
+<span class="px-2.5 py-1 bg-surface-ice text-primary font-caption-caps text-caption-caps rounded-full font-bold">
+                2024 – 2027 Dönemi
+              </span>
+</div>
+<ul class="flex flex-col gap-space-md">
+<li class="flex items-center justify-between bg-surface-container-lowest p-space-md rounded-lg">
+<div>
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Müfit ÇAĞLAYAN</h4>
+<p class="font-body-sm text-body-sm text-slate-muted">Denetim Kurulu Başkanı | YMM, Bağımsız Denetçi</p>
+</div>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</li>
+<li class="flex items-center justify-between bg-surface-container-lowest p-space-md rounded-lg">
+<div>
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Dr. Öğr. Üyesi Nazan GÜLTEKİN</h4>
+<p class="font-body-sm text-body-sm text-slate-muted">Denetim Kurulu Raportörü | Bilkent Üniversitesi</p>
+</div>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</li>
+<li class="flex items-center justify-between bg-surface-container-lowest p-space-md rounded-lg">
+<div>
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Ahmet Selim YURDAKUL</h4>
+<p class="font-body-sm text-body-sm text-slate-muted">Denetim Kurulu Üyesi | T.C. Ticaret Bakanlığı (E.)</p>
+</div>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</li>
+</ul>
+</div>
+<!-- Yedek Üyeler -->
+<div class="bg-surface-container-low p-space-lg rounded-xl">
+<div class="flex items-center justify-between pb-space-sm mb-space-md border-b border-outline-variant/30">
+<h3 class="font-headline-sm text-headline-sm text-slate-dark font-bold flex items-center gap-2">
+<span class="material-symbols-outlined">history</span>
+                Yedek Denetim Heyeti
+              </h3>
+<span class="px-2.5 py-1 bg-surface-container-high text-slate-dark font-caption-caps text-caption-caps rounded-full font-bold">
+                Yedek Liste
+              </span>
+</div>
+<ul class="flex flex-col gap-space-md">
+<li class="flex items-center justify-between bg-surface-container-lowest p-space-md rounded-lg">
+<div>
+<h4 class="font-label-md text-label-md font-bold text-on-surface">İlker VURAL</h4>
+<p class="font-body-sm text-body-sm text-slate-muted">Kurumsal Risk Analisti | SMMM</p>
+</div>
+<span class="text-slate-muted font-label-sm text-label-sm">1. Yedek</span>
+</li>
+<li class="flex items-center justify-between bg-surface-container-lowest p-space-md rounded-lg">
+<div>
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Bahar ÇETİN KORKUT</h4>
+<p class="font-body-sm text-body-sm text-slate-muted">İletişim Danışmanı | Ajans Yöneticisi</p>
+</div>
+<span class="text-slate-muted font-label-sm text-label-sm">2. Yedek</span>
+</li>
+<li class="flex items-center justify-between bg-surface-container-lowest p-space-md rounded-lg">
+<div>
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Kemal Serdar ÖZTUNA</h4>
+<p class="font-body-sm text-body-sm text-slate-muted">Kamuoyu Araştırmacısı</p>
+</div>
+<span class="text-slate-muted font-label-sm text-label-sm">3. Yedek</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<!-- TAB 4: ONUR KURULU -->
+<div class="hidden flex flex-col gap-space-xl" id="panel-onur">
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm">
+<div class="max-w-3xl mb-space-lg">
+<div class="inline-flex items-center gap-2 bg-gold-light/40 text-gold-deep px-3 py-1 rounded-full font-caption-caps text-caption-caps mb-space-xs uppercase tracking-wider font-bold">
+<span class="material-symbols-outlined text-sm">stars</span>
+            Mesleki Liyakat &amp; Vefa
+          </div>
+<h2 class="font-headline-lg text-headline-lg text-primary font-bold mb-2">Onur Kurulu Üyelerimiz</h2>
+<p class="font-body-md text-body-md text-slate-muted">
+            Meslek ahlakı, dernek ilkeleri ve Türkiye'de halkla ilişkiler mesleğine yarım asrı aşkın süreyle üstün hizmetlerde bulunmuş saygıdeğer üstatlarımız.
+          </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<div class="bg-surface-container-low p-space-lg rounded-xl text-center flex flex-col items-center gap-space-sm hover:shadow-md transition-shadow">
+<div class="w-20 h-20 rounded-full bg-surface-ice flex items-center justify-center text-gold-deep mb-space-xs">
+<span class="material-symbols-outlined text-3xl">workspace_premium</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">Prof. Dr. Ünsal OSKAY (Merhum)</h4>
+<span class="px-2 py-0.5 rounded bg-surface-variant text-primary font-caption-caps text-caption-caps uppercase">Ebedi Onur Üyesi</span>
+<p class="font-body-sm text-body-sm text-slate-muted leading-relaxed">
+              İletişim kuramcısı, araştırmacı ve derneğimizin ilk tüzük kuram danışmanı.
+            </p>
+</div>
+<div class="bg-surface-container-low p-space-lg rounded-xl text-center flex flex-col items-center gap-space-sm hover:shadow-md transition-shadow">
+<div class="w-20 h-20 rounded-full bg-surface-ice flex items-center justify-center text-gold-deep mb-space-xs">
+<span class="material-symbols-outlined text-3xl">workspace_premium</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">Ayşe Nur ERDEMİR</h4>
+<span class="px-2 py-0.5 rounded bg-surface-variant text-primary font-caption-caps text-caption-caps uppercase">Onur Kurulu Üyesi</span>
+<p class="font-body-sm text-body-sm text-slate-muted leading-relaxed">
+              Kamu İletişimi Vakfı Kurucusu &amp; Başkent İletişim Duayeni.
+            </p>
+</div>
+<div class="bg-surface-container-low p-space-lg rounded-xl text-center flex flex-col items-center gap-space-sm hover:shadow-md transition-shadow">
+<div class="w-20 h-20 rounded-full bg-surface-ice flex items-center justify-center text-gold-deep mb-space-xs">
+<span class="material-symbols-outlined text-3xl">workspace_premium</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">Dr. Şevket BİLGİLİ</h4>
+<span class="px-2 py-0.5 rounded bg-surface-variant text-primary font-caption-caps text-caption-caps uppercase">Onur Kurulu Üyesi</span>
+<p class="font-body-sm text-body-sm text-slate-muted leading-relaxed">
+              T.C. Cumhurbaşkanlığı Basın Başdanışmanlığı Emekli Koordinatörü.
+            </p>
+</div>
+<div class="bg-surface-container-low p-space-lg rounded-xl text-center flex flex-col items-center gap-space-sm hover:shadow-md transition-shadow">
+<div class="w-20 h-20 rounded-full bg-surface-ice flex items-center justify-center text-gold-deep mb-space-xs">
+<span class="material-symbols-outlined text-3xl">workspace_premium</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-bold">Perihan ALTINAY</h4>
+<span class="px-2 py-0.5 rounded bg-surface-variant text-primary font-caption-caps text-caption-caps uppercase">Onur Kurulu Üyesi</span>
+<p class="font-body-sm text-body-sm text-slate-muted leading-relaxed">
+              TRT Eski Dış İlişkiler ve Basın Koordinatörü, AHİD Kurucu Heyet Üyesi.
+            </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Institutional Bottom Note: Tüzük ve Arşiv Bildirisi -->
+<div class="mt-space-2xl bg-surface-ice rounded-xl p-space-lg flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">folder_managed</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-primary font-bold">AHİD Kurumsal Arşivi &amp; Belge Talep Sistemi</h4>
+<p class="font-body-sm text-body-sm text-slate-muted">Geçmiş dönem genel kurul zabıtları, tüzük tadil metinleri ve araştırma raporları hakkında resmi bilgi talebinde bulunabilirsiniz.</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm shrink-0 w-full sm:w-auto">
+<a class="w-full sm:w-auto text-center px-4 py-2 bg-surface-container-lowest text-primary hover:bg-surface-container font-label-md text-label-md rounded shadow-sm transition-colors" data-path="dernek-tuzugu" href="#">
+          Resmi Tüzük
+        </a>
+<a class="w-full sm:w-auto text-center px-4 py-2 bg-primary text-on-primary hover:bg-secondary font-label-md text-label-md rounded shadow-sm transition-colors" data-path="iletisim" href="#">
+          Arşiv Masası İletişim
+        </a>
+</div>
+</div>
+</div>
+<!-- Interactive Tab Switching Logic -->
+<script>
+    function switchTab(target) {
+      // Panels
+      const panels = ['baskanlar', 'danisma', 'denetim', 'onur'];
+      panels.forEach(p => {
+        const el = document.getElementById('panel-' + p);
+        const btn = document.getElementById('tab-btn-' + p);
+        if (p === target) {
+          el.classList.remove('hidden');
+          btn.classList.remove('bg-surface-container-low', 'text-on-surface');
+          btn.classList.add('bg-primary', 'text-on-primary');
+        } else {
+          el.classList.add('hidden');
+          btn.classList.remove('bg-primary', 'text-on-primary');
+          btn.classList.add('bg-surface-container-low', 'text-on-surface');
+        }
+      });
+    }
+  </script>
+</div></main><footer class="w-full bg-inverse-surface text-inverse-on-surface mt-space-3xl"><div class="bg-primary text-on-primary py-space-xl"><div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-space-lg"><div><h4 class="font-headline-sm text-headline-sm font-bold text-gold-light mb-1">İletişim Bültenimize Abone Olun</h4><p class="font-body-sm text-body-sm text-on-primary-container">Halkla ilişkiler sektöründeki akademik araştırmalar, Ankara etkinlikleri ve mevzuat analizleri e-postanızda.</p></div><form class="flex w-full md:w-auto max-w-md items-center gap-space-xs"><input class="w-full md:w-80 px-4 py-2.5 rounded bg-surface-container-lowest text-on-surface font-body-sm text-body-sm outline-none placeholder:text-outline" placeholder="E-posta adresinizi girin..." type="email"/><button class="bg-[#c25e00] hover:bg-[#a04703] text-white font-semibold px-5 py-2.5 rounded-lg shadow-sm hover:shadow-md active:scale-95 transition-all duration-200" type="submit">Kayıt Ol</button></form></div></div><div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop py-space-3xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-xl"><div class="flex flex-col gap-space-md"><div class="flex items-center gap-3"><img alt="AHİD Logo" class="h-8 w-auto object-contain brightness-0 invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUVefFrV3KExtXwBoSL59qj1P1NTanfng_maXmRVOKsP-14S8QXt-Y6ajYo7ufP2wNjVuoMS3FvJMSlYSNaae8l5CEbUmxRM8o8bcsoiuXnS8yhtSFTPz8lx7bbeeumYJr8Cg3iBaOs-GmFHnJCKvPYeRyblrbxc8TlNR31ZdjLLECVSZCRdm-2qqiRZrP3hgKGyozSoIyPNRKUIt3JyxXAlVVRngz8OR89qQyzwaCLgh8tHAooLI8"/><span class="font-headline-sm text-headline-sm text-on-primary font-bold">AHİD</span></div><p class="font-body-sm text-body-sm text-slate-muted leading-relaxed">1990 yılında başkentte kurulan Ankara Halkla İlişkiler Derneği; kurumsal iletişim liderlerini, akademisyenleri ve geleceğin iletişimcilerini ortak bir kurumsal çatıda bir araya getirir.</p><div class="flex items-center gap-space-sm pt-space-xs"><span class="inline-flex items-center px-2.5 py-1 rounded font-caption-caps text-caption-caps bg-surface-variant/20 text-inverse-primary">T.C. İçişleri Bakanlığı Akredite</span></div></div><div class="flex flex-col gap-space-md"><h5 class="font-label-md text-label-md text-gold-light uppercase tracking-wider font-bold">Kurumsal Yönetişim</h5><ul class="flex flex-col gap-space-sm font-body-sm text-body-sm text-slate-muted"><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="hakkimizda" href="#">Tarihçe &amp; Hakkımızda</a></li><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="misyon-vizyon" href="#">Misyon &amp; Vizyon İlkeleri</a></li><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="yonetim-kurulu" href="#">Yönetim ve Denetim Kurulu</a></li><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="dernek-tuzugu" href="#">Resmi Dernek Tüzüğü</a></li><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="etik-kodlar" href="#">Mesleki Etik Kuralları</a></li></ul></div><div class="flex flex-col gap-space-md"><h5 class="font-label-md text-label-md text-gold-light uppercase tracking-wider font-bold">Yayınlar &amp; Etkinlikler</h5><ul class="flex flex-col gap-space-sm font-body-sm text-slate-muted"><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="kose-yazilari" href="#">Usta'ya Saygı Yazı Dizisi</a></li><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="etkinlikler-ve-oduller" href="#">Altın Pusula &amp; İletişim Zirvesi</a></li><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="akademik-yayinlar" href="#">Hakemli İletişim Raporları</a></li><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="basin-bultenleri" href="#">Basın Bültenleri Arşivi</a></li><li class=""><a class="hover:text-inverse-primary transition-colors" data-path="medya-galerisi" href="#">Fotoğraf &amp; Video Galerisi</a></li></ul></div><div class="flex flex-col gap-space-md"><h5 class="font-label-md text-label-md text-gold-light uppercase tracking-wider font-bold">Genel Merkez İletişim</h5><div class="flex flex-col gap-space-sm font-body-sm text-body-sm text-slate-muted"><div class="flex items-start gap-space-xs"><span class="material-symbols-outlined text-inverse-primary text-lg mt-0.5">apartment</span><span class="">Anıttepe Mah. Kültür Sok. No: 5/4 Tandoğan, Çankaya / Ankara</span></div><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-inverse-primary text-lg">call</span><span class="">+90 (312) 231 90 90</span></div><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-inverse-primary text-lg">mail</span><a class="hover:text-inverse-primary transition-colors" href="mailto:iletisim@ahid.org.tr">iletisim@ahid.org.tr</a></div><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-inverse-primary text-lg">schedule</span><span class="">Hafta İçi: 09:00 - 18:00</span></div></div></div></div><div class="bg-black/20 py-space-lg"><div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop flex flex-col sm:flex-row items-center justify-between gap-space-md font-body-sm text-body-sm text-slate-muted"><div class="">© 1990 - 2025 Ankara Halkla İlişkiler Derneği (AHİD). Tüm hakları saklıdır.</div><div class="flex flex-wrap items-center gap-space-md"><a class="hover:text-inverse-primary transition-colors" data-path="kvkk-aydinlatma" href="#">KVKK Aydınlatma</a><a class="hover:text-inverse-primary transition-colors" data-path="gizlilik-politikasi" href="#">Gizlilik Politikası</a><a class="hover:text-inverse-primary transition-colors" data-path="cerez-politikasi" href="#">Çerez Politikası</a><a class="hover:text-inverse-primary transition-colors" data-path="bilgi-toplumu" href="#">Bilgi Toplumu Hizmetleri</a></div></div></div></footer>
+</body></html>

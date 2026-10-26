@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "stitch": {
+      "url": "https://stitch.googleapis.com/mcp",
+      "serverUrl": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "YOUR_API_KEY_HERE"
+      }
+    },
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching",
+      "serverUrl": "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"
+    }
+  }
+}

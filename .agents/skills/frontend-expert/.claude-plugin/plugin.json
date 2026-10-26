@@ -1,0 +1,18 @@
+{
+  "name": "frontend-expert",
+  "description": "Evidence-led frontend UI quality — judgment, tokens, typography, color, surfaces, content, responsive, motion, accessibility, performance, and testing.",
+  "author": {
+    "name": "sukirman1901",
+    "url": "https://github.com/sukirman1901"
+  },
+  "homepage": "https://github.com/sukirman1901/frontend-expert",
+  "repository": "https://github.com/sukirman1901/frontend-expert",
+  "license": "MIT",
+  "commands": ["./.claude/commands", "./commands"],
+  "skills": "./skills",
+  "agents": [
+    "./agents/design-reviewer.md",
+    "./agents/ui-developer.md",
+    "./agents/test-engineer.md"
+  ]
+}

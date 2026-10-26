@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "frontend-expert",
+  "description": "Evidence-led frontend UI quality for AI agents — design foundations, responsive, accessibility, performance, and testing.",
+  "owner": {
+    "name": "sukirman1901",
+    "url": "https://github.com/sukirman1901"
+  },
+  "plugins": [
+    {
+      "name": "frontend-expert",
+      "source": "./",
+      "description": "Senior FE judgment + quality loop (/polish), curated tokens, agents, optional /ui /test-ui /design /audit.",
+      "homepage": "https://github.com/sukirman1901/frontend-expert",
+      "license": "MIT",
+      "keywords": [
+        "frontend",
+        "design-system",
+        "shadcn",
+        "accessibility",
+        "anti-slop",
+        "tokens",
+        "judgment"
+      ]
+    }
+  ]
+}

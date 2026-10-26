@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+
+<html lang="tr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-variant":"#d7e3fc","on-tertiary":"#ffffff","on-surface":"#101c2e","secondary-container":"#6d9bff","on-primary":"#ffffff","error-container":"#ffdad6","on-secondary":"#ffffff","gold-deep":"#92400E","on-error-container":"#93000a","error":"#ba1a1a","on-secondary-fixed-variant":"#00429a","surface-ice":"#EBF2FC","primary-container":"#0b3d91","outline-variant":"#c4c6d3","primary-fixed":"#dae2ff","surface-container-high":"#dee8ff","inverse-primary":"#b1c5ff","tertiary-container":"#673500","tertiary-fixed":"#ffdcc3","on-secondary-container":"#003277","surface-container-low":"#f0f3ff","on-primary-container":"#8dadff","surface-container-lowest":"#ffffff","background":"#f9f9ff","secondary-fixed-dim":"#afc6ff","surface-tint":"#345baf","tertiary":"#472300","inverse-surface":"#253144","surface-container":"#e7eeff","on-background":"#101c2e","primary-fixed-dim":"#b1c5ff","gold-light":"#FDE68A","on-error":"#ffffff","outline":"#747783","secondary-fixed":"#d9e2ff","on-secondary-fixed":"#001944","surface-container-highest":"#d7e3fc","surface-canvas":"#F8FAFC","slate-dark":"#334155","slate-muted":"#64748B","primary":"#002869","surface":"#f9f9ff","on-primary-fixed":"#001947","secondary":"#225aba","on-tertiary-container":"#fe942d","inverse-on-surface":"#ecf1ff","tertiary-fixed-dim":"#ffb77d","on-tertiary-fixed":"#2f1500","surface-dim":"#cfdaf3","on-tertiary-fixed-variant":"#6e3900","surface-bright":"#f9f9ff","on-primary-fixed-variant":"#144296","on-surface-variant":"#434652"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{"space-2xl":"4rem","space-sm":"0.5rem",gutter:"1.5rem","space-xl":"2.5rem",margin:"1.5rem","margin-tablet":"2rem","margin-desktop":"3.5rem","space-xs":"0.25rem","space-md":"1rem","gutter-mobile":"1rem","gutter-desktop":"2rem","space-lg":"1.5rem","space-3xl":"6rem","margin-mobile":"1rem"},fontFamily:{"headline-sm":["Plus Jakarta Sans"],"body-sm":["Inter"],"headline-lg":["Plus Jakarta Sans"],"headline-xl":["Plus Jakarta Sans"],"caption-caps":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"display-hero-mobile":["Plus Jakarta Sans"],"label-sm":["Inter"],"label-md":["Inter"],"headline-xl-mobile":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"display-hero":["Plus Jakarta Sans"]},fontSize:{"headline-sm":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-sm":["14px",{lineHeight:"20px",letterSpacing:"0em",fontWeight:"400"}],"headline-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"700"}],"headline-xl":["40px",{lineHeight:"48px",letterSpacing:"-0.025em",fontWeight:"700"}],"caption-caps":["11px",{lineHeight:"16px",letterSpacing:"0.08em",fontWeight:"700"}],"body-md":["16px",{lineHeight:"24px",letterSpacing:"0em",fontWeight:"400"}],"body-lg":["18px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"400"}],"display-hero-mobile":["36px",{lineHeight:"44px",letterSpacing:"-0.02em",fontWeight:"800"}],"label-sm":["12px",{lineHeight:"16px",letterSpacing:"0.04em",fontWeight:"600"}],"label-md":["14px",{lineHeight:"20px",letterSpacing:"0.02em",fontWeight:"600"}],"headline-xl-mobile":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"700"}],"headline-md":["24px",{lineHeight:"32px",letterSpacing:"-0.015em",fontWeight:"600"}],"display-hero":["56px",{lineHeight:"64px",letterSpacing:"-0.03em",fontWeight:"800"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="px-6 pt-6 pb-5 flex items-center gap-3 bg-surface-container"><div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[24px]">account_balance</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">AHİD PORTAL</span><span class="font-caption-caps text-caption-caps text-slate-muted uppercase tracking-wider">Yönetim ve CMS Masası</span></div></div><div class="mx-4 mt-4 p-3 rounded-lg bg-surface-ice flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span><span class="font-label-sm text-label-sm text-primary font-semibold">Portak Sunucu Aktif</span></div><span class="font-caption-caps text-caption-caps bg-surface-container-lowest text-secondary px-2 py-0.5 rounded-full shadow-sm">v3.4.2</span></div><nav class="flex flex-col gap-1 px-3 mt-4" data-active-classes="bg-primary text-on-primary font-semibold shadow-sm"><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="genel-bakis" href="#"><span class="material-symbols-outlined text-[20px]">dashboard</span><span class="font-label-md text-label-md">Genel Bakış</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sayfa-icerik-ve-metin-yonetimi" href="#"><span class="material-symbols-outlined text-[20px]">article</span><span class="font-label-md text-label-md">Sayfa İçerik &amp; Metin</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="medya-ve-gorsel-kutuphanesi" href="#"><span class="material-symbols-outlined text-[20px]">photo_library</span><span class="font-label-md text-label-md">Medya Galerisi</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="uyelik-basvurulari-ve-akreditasyon" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="font-label-md text-label-md">Üyelik &amp; Akreditasyon</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="etkinlik-ve-zirve-yonetimi" href="#"><span class="material-symbols-outlined text-[20px]">event_available</span><span class="font-label-md text-label-md">Etkinlik &amp; Zirve</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="kose-yazilari-ve-yayinlar" href="#"><span class="material-symbols-outlined text-[20px]">menu_book</span><span class="font-label-md text-label-md">Köşe Yazıları &amp; Yayınlar</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="protokol-ve-iletisim-masasi" href="#"><span class="material-symbols-outlined text-[20px]">contact_mail</span><span class="font-label-md text-label-md">Protokol &amp; İletişim</span></a><a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sistem-ve-guvenlik-ayarlari" href="#"><span class="material-symbols-outlined text-[20px]">admin_panel_settings</span><span class="font-label-md text-label-md">Sistem &amp; Güvenlik</span></a></nav></div><div class="p-4 bg-surface-container-lowest m-3 rounded-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex items-center justify-between mb-2"><span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Kurumsal Güven</span><span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span></div><p class="font-body-sm text-body-sm text-slate-dark leading-tight">Resmi Protokol Veritabanı ve KEP Altyapısı Korunmaktadır.</p></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-8"><div class="flex items-center gap-6"><div class="flex items-center gap-2 text-slate-muted font-label-sm text-label-sm"><span class="material-symbols-outlined text-[18px]">home</span><span>/</span><span class="text-on-surface font-semibold">Yönetim Portalı</span></div><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-slate-muted text-[18px]">search</span><input class="bg-surface-container-low text-on-surface font-body-sm text-body-sm rounded-lg pl-9 pr-4 py-1.5 focus:outline-none focus:bg-surface-container-lowest transition-all w-72" placeholder="İçerik, üye veya protokol ara..." type="text"/></div></div><div class="flex items-center gap-4"><div class="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-surface-ice text-primary"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="font-caption-caps text-caption-caps">DERBİS &amp; KEP ENTEGRE</span></div><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></button><div class="h-6 w-px bg-surface-container-highest"></div><div class="flex items-center gap-3"><div class="flex flex-col text-right"><span class="font-label-sm text-label-sm text-on-surface font-bold leading-tight">Ahmet Yılmaz</span><span class="font-caption-caps text-caption-caps text-slate-muted">Genel Sekreterlik</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><a class="p-1.5 rounded-lg text-slate-muted hover:bg-error-container hover:text-on-error-container transition-colors" data-path="login" href="#" title="Güvenli Çıkış"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></header><main class="relative pt-16 bg-background min-h-screen px-8 py-6"><div class="flex flex-col w-full gap-8">
+<!-- Top Command & Status Bar -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-container-lowest p-6 rounded-xl shadow-sm">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-3">
+<span class="font-caption-caps text-caption-caps text-secondary font-bold uppercase tracking-wider bg-surface-ice px-2.5 py-1 rounded-full">CMS Dinamik Veri &amp; Değişken Motoru</span>
+<span class="flex items-center gap-1.5 font-label-sm text-label-sm text-slate-muted">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+          Canlı Senkronizasyon Aktif
+        </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">Sayfa İçerik &amp; Değişken Yönetim Masası</h1>
+<p class="font-body-sm text-body-sm text-slate-dark max-w-2xl">
+        AHİD ana sayfa manşetleri, yönetim kurulu üye profilleri, afişler ve anlık form başvurularını tek merkezden revize edin. Yapılan değişiklikler CDN üzerinden anında yayına yansır.
+      </p>
+</div>
+<div class="flex flex-wrap items-center gap-3">
+<div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container-low text-slate-dark font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[18px] text-secondary">cloud_done</span>
+<span>Son kayıt: <strong class="text-on-surface">3 dk önce (Otomatik)</strong></span>
+</div>
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface-container-high text-primary hover:bg-surface-variant font-label-md text-label-md font-semibold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+<span>Önizleme Al</span>
+</button>
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold transition-all shadow-md" type="button">
+<span class="material-symbols-outlined text-[18px]">publish</span>
+<span>Canlıya Aktar</span>
+</button>
+</div>
+</div>
+<!-- Operational Metric Tiles -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+<!-- Metric 1 -->
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Üyelik Aday Masası</span>
+<span class="p-2 rounded-lg bg-surface-ice text-primary">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</span>
+</div>
+<div class="flex items-baseline justify-between mt-1">
+<div>
+<span class="font-headline-lg text-headline-lg text-primary font-bold">14</span>
+<span class="font-body-sm text-body-sm text-slate-muted ml-1">yeni başvuru</span>
+</div>
+<span class="font-caption-caps text-caption-caps bg-gold-light text-gold-deep px-2 py-0.5 rounded-full font-bold">İnceleniyor</span>
+</div>
+<div class="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-gold-deep h-full rounded-full" style="width: 65%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-slate-dark">5 dosya DERBİS sicil sorgusunda</span>
+</div>
+<!-- Metric 2 -->
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Protokol &amp; Randevu</span>
+<span class="p-2 rounded-lg bg-surface-ice text-secondary">
+<span class="material-symbols-outlined text-[20px]">event_seat</span>
+</span>
+</div>
+<div class="flex items-baseline justify-between mt-1">
+<div>
+<span class="font-headline-lg text-headline-lg text-secondary font-bold">7</span>
+<span class="font-body-sm text-body-sm text-slate-muted ml-1">aktif talep</span>
+</div>
+<span class="font-caption-caps text-caption-caps bg-error-container text-on-error-container px-2 py-0.5 rounded-full font-bold">2 Acil Randevu</span>
+</div>
+<div class="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 40%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-slate-dark">İletişim Bşk. ve RTÜK heyetleri</span>
+</div>
+<!-- Metric 3 -->
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Yayın &amp; Makaleler</span>
+<span class="p-2 rounded-lg bg-surface-ice text-primary">
+<span class="material-symbols-outlined text-[20px]">article</span>
+</span>
+</div>
+<div class="flex items-baseline justify-between mt-1">
+<div>
+<span class="font-headline-lg text-headline-lg text-primary font-bold">28</span>
+<span class="font-body-sm text-body-sm text-slate-muted ml-1">akademik metin</span>
+</div>
+<span class="font-caption-caps text-caption-caps bg-surface-container text-primary px-2 py-0.5 rounded-full font-bold">3 Taslakta</span>
+</div>
+<div class="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 82%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-slate-dark">Halkla İlişkiler Bülteni Q4 yayında</span>
+</div>
+<!-- Metric 4 -->
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Bulut CDN Alanı</span>
+<span class="p-2 rounded-lg bg-surface-ice text-secondary">
+<span class="material-symbols-outlined text-[20px]">cloud_queue</span>
+</span>
+</div>
+<div class="flex items-baseline justify-between mt-1">
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">1.8 <span class="text-body-lg text-slate-muted">/ 10 GB</span></span>
+</div>
+<span class="font-caption-caps text-caption-caps bg-surface-ice text-secondary px-2 py-0.5 rounded-full font-bold">Optimize</span>
+</div>
+<div class="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full rounded-full" style="width: 18%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-slate-dark">WebP sıkıştırma aktif • 8.2 GB boş</span>
+</div>
+</div>
+<!-- Workspace Tabs -->
+<div class="flex items-center gap-2 border-b-0 bg-surface-container-low p-1.5 rounded-xl w-fit">
+<button class="flex items-center gap-2.5 px-5 py-2.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-bold shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">edit_document</span>
+<span>Sayfa Değişkenleri &amp; Canlı İçerik Düzenleyici</span>
+</button>
+<button class="flex items-center gap-2.5 px-5 py-2.5 rounded-lg text-slate-dark hover:bg-surface-container font-label-md text-label-md font-semibold transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">photo_library</span>
+<span>Medya &amp; Fotoğraf Yöneticisi</span>
+<span class="bg-surface-variant text-primary font-caption-caps text-caption-caps px-2 py-0.5 rounded-full">184</span>
+</button>
+<button class="flex items-center gap-2.5 px-5 py-2.5 rounded-lg text-slate-dark hover:bg-surface-container font-label-md text-label-md font-semibold transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">move_to_inbox</span>
+<span>Gelen Form &amp; Başvuru Kutusu</span>
+<span class="bg-error-container text-on-error-container font-caption-caps text-caption-caps px-2 py-0.5 rounded-full font-bold">14 Yeni</span>
+</button>
+</div>
+<!-- Core Content Grid: Left Main Editor (8 cols) & Right Inbox Stream (4 cols) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Left Column: Variable & Asset CMS Editor (8 Cols) -->
+<div class="lg:col-span-8 flex flex-col gap-8">
+<!-- Target Page Switcher Card -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-ice text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">auto_stories</span>
+</div>
+<div>
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Düzenlenen Şablon</span>
+<div class="font-headline-sm text-headline-sm text-primary font-bold">Ana Sayfa (Portal Hero &amp; Manşet)</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<label class="font-label-sm text-label-sm text-slate-muted hidden sm:inline">Hedef Sayfa:</label>
+<div class="relative">
+<select class="appearance-none bg-surface-container-low font-label-md text-label-md text-on-surface font-semibold pl-4 pr-10 py-2.5 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm cursor-pointer">
+<option selected="">Ana Sayfa (Homepage Vitrini)</option>
+<option>Kurumsal &amp; Yönetim Kurulu</option>
+<option>Etkinlikler &amp; Başkent İletişim Zirvesi</option>
+<option>Köşe Yazıları &amp; Yayın Odası</option>
+<option>İletişim &amp; Protokol Randevu</option>
+</select>
+<span class="material-symbols-outlined text-[20px] text-slate-muted absolute right-2.5 top-2.5 pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Section 1: Hero & Üst Tanıtım Alanı -->
+<div class="bg-surface-container-lowest p-7 rounded-xl shadow-sm flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-6 bg-primary rounded-full"></span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary font-bold">1. Hero &amp; Üst Tanıtım Alanı Değişkenleri</h2>
+<p class="font-body-sm text-body-sm text-slate-muted">Canlı sitedeki manşet görseli, tipografik slogan ve temel kurum göstergeleri</p>
+</div>
+</div>
+<span class="font-caption-caps text-caption-caps bg-surface-ice text-primary px-3 py-1 rounded-full font-semibold">Bölüm Kimliği: hero_section_v1</span>
+</div>
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-slate-dark font-semibold">Ana Manşet Başlığı (Slogan)</label>
+<input class="bg-surface-container-low font-body-md text-body-md text-on-surface p-3 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm" type="text" value="Başkentin Kalbinde, İletişim Mesleğinin Hizmetindeyiz"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-slate-dark font-semibold">Alt Tanıtım Paragrafı (Kurumsal Özet)</label>
+<textarea class="bg-surface-container-low font-body-sm text-body-sm text-on-surface p-3 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm leading-relaxed" rows="3">Ankara Halkla İlişkiler Derneği (AHİD); kamu diplomasisi, kurumsal itibar yönetimi ve stratejik iletişim uzmanlarını tek bir saygın çatı altında birleştirerek mesleki standartları yüceltir.</textarea>
+</div>
+</div>
+<!-- Image Upload & Dropzone Split Grid -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-5 pt-2">
+<!-- Active Hero Photo Preview -->
+<div class="md:col-span-5 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-slate-dark font-semibold">Mevcut Hero Görseli</span>
+<div class="relative rounded-lg overflow-hidden group shadow-sm bg-surface-container">
+<img class="w-full h-44 object-cover" data-alt="A cinematic, high-resolution architectural photograph of Ankara's modern communication hub building at dusk. Deep navy and gold interior ambient lighting glows through glass facades. Elegant corporate diplomats and communicators are subtly framed in conversation inside. Sophisticated institutional atmosphere, crisp details, soft blue sky gradient." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqsjezCLQ3BcS3j5m6Lt3FC6D76RaA7G45p7O7knK-dFI-aDZd1lx6JuU0YhVmAizJs1TO1V0R1iYSP60obDUon22Bk8VKpzXiGMHImYgDPOTWdmZb8UwK0fHw3xkYG6X5Im8j78OJ9thmqJc5BCNP6VUVZGczqrxdl9U5g5MOb4JHPlmYJYdewNj-XQFTRAn_ar3ltKhLGyKnHo3hmCIm_IlJ8VSRUdwDbhvhA1crN40go8uvdhAO"/>
+<div class="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="p-2 rounded-lg bg-surface-container-lowest text-primary hover:bg-surface-ice font-label-sm text-label-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">zoom_in</span>
+</button>
+<button class="p-2 rounded-lg bg-surface-container-lowest text-error hover:bg-error-container font-label-sm text-label-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+<div class="absolute bottom-2 left-2 right-2 bg-surface/90 backdrop-blur-md px-2.5 py-1.5 rounded flex items-center justify-between">
+<span class="font-caption-caps text-caption-caps text-primary font-bold truncate">hero_ankara_merkez.webp</span>
+<span class="font-caption-caps text-caption-caps text-slate-muted">1.4 MB</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 mt-1">
+<label class="font-label-sm text-label-sm text-slate-muted">Görsel Alt Metni (SEO &amp; Erişilebilirlik)</label>
+<input class="bg-surface-container-low font-body-sm text-body-sm text-on-surface px-3 py-1.5 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm" type="text" value="AHİD Ankara İletişim Zirvesi ve Yönetim Binası"/>
+</div>
+</div>
+<!-- Dropzone Uploader -->
+<div class="md:col-span-7 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-slate-dark font-semibold">Görsel Değiştir veya Yeni Yükle</span>
+<div class="h-44 rounded-lg bg-surface-container-low hover:bg-surface-ice transition-colors flex flex-col items-center justify-center p-4 text-center cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-surface-container-lowest text-secondary flex items-center justify-center mb-2 shadow-sm group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[26px]">cloud_upload</span>
+</div>
+<span class="font-label-md text-label-md text-primary font-bold">Yeni fotoğrafı buraya sürükleyin</span>
+<p class="font-caption-caps text-caption-caps text-slate-muted mt-0.5">PNG, JPG, WebP • Önerilen: 2560x1080px (Maks 5MB)</p>
+<button class="mt-2.5 px-3 py-1 rounded bg-surface-container-lowest text-secondary font-label-sm text-label-sm font-semibold shadow-sm hover:bg-surface-container-high transition-colors" type="button">
+                Bilgisayardan Dosya Seç
+              </button>
+</div>
+<div class="flex items-center gap-2 text-slate-muted font-caption-caps text-caption-caps">
+<span class="material-symbols-outlined text-[16px] text-secondary">info</span>
+<span>Yüklenen fotoğraflar otomatik olarak AVIF ve WebP formatında optimize edilir.</span>
+</div>
+</div>
+</div>
+<!-- Metric Counter Variables -->
+<div class="flex flex-col gap-2 pt-2">
+<span class="font-label-sm text-label-sm text-slate-dark font-semibold">Sayısal Başarı Göstergeleri (Canlı Sayaçlar)</span>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div class="p-3 rounded-lg bg-surface-container-low flex flex-col gap-1">
+<span class="font-caption-caps text-caption-caps text-slate-muted">Kayıtlı Aktif Üye</span>
+<div class="flex items-center justify-between">
+<input class="bg-surface-container-lowest font-headline-sm text-headline-sm text-primary font-bold px-2 py-1 rounded w-28 text-left focus:outline-none shadow-sm" type="text" value="350+"/>
+<span class="font-caption-caps text-caption-caps text-slate-dark font-semibold">Kişi / Kurum</span>
+</div>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-low flex flex-col gap-1">
+<span class="font-caption-caps text-caption-caps text-slate-muted">Kuruluş Yılı</span>
+<div class="flex items-center justify-between">
+<input class="bg-surface-container-lowest font-headline-sm text-headline-sm text-primary font-bold px-2 py-1 rounded w-28 text-left focus:outline-none shadow-sm" type="text" value="1990"/>
+<span class="font-caption-caps text-caption-caps text-slate-dark font-semibold">Resmi Tescil</span>
+</div>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-low flex flex-col gap-1">
+<span class="font-caption-caps text-caption-caps text-slate-muted">Zirve &amp; Sempozyum</span>
+<div class="flex items-center justify-between">
+<input class="bg-surface-container-lowest font-headline-sm text-headline-sm text-primary font-bold px-2 py-1 rounded w-28 text-left focus:outline-none shadow-sm" type="text" value="120+"/>
+<span class="font-caption-caps text-caption-caps text-slate-dark font-semibold">Etkinlik</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 2: Yönetim Kurulu & Yazar Fotoğraf ve Bilgi Kartları Düzenleyici -->
+<div class="bg-surface-container-lowest p-7 rounded-xl shadow-sm flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-6 bg-secondary rounded-full"></span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary font-bold">2. Yönetim Kurulu ve Protokol Kartları Düzenleyici</h2>
+<p class="font-body-sm text-body-sm text-slate-muted">Yetkili üyelerin portre fotoğrafları, unvanları ve biyografi metinlerini anlık güncelleyin</p>
+</div>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-ice text-primary hover:bg-surface-variant font-label-sm text-label-sm font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">person_add</span>
+<span>Yeni Üye Ekle</span>
+</button>
+</div>
+<!-- Member Management Cards -->
+<div class="flex flex-col gap-4">
+<!-- Member 1: President -->
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col md:flex-row items-center gap-5 justify-between shadow-sm">
+<div class="flex items-center gap-4 w-full md:w-auto">
+<div class="relative w-16 h-16 rounded-full overflow-hidden shrink-0 shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Distinguished Turkish communications professor in his late fifties wearing an elegant dark navy suit and silk burgundy tie against a soft neutral institutional backdrop. Confident warm smile, authoritative academic portrait style, professional editorial lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpKHGe9DquCIC4jtbtdtQt7LyRdqSjGdOBg66b4IQI9kyzC1swmrTgKgW5MtTGghaqvA-Qt8_ClFmQj5CIbSCEeBTreFtoHLMjcQvXMWec8tbMvFY_wEquzXaUFWv2NX5R0LLfKj2CpfMjtDoRJI1me4poloMcXL08V4W5mqEN22-sAoBDiLbbpZITG4ExKF_GcXBrLtii3T9EpLaISXwugbWCzZV0TtFxfmKY-pmeMDmZRFjzqi6Q"/>
+<button class="absolute inset-0 bg-primary/50 text-on-primary opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center" title="Fotoğraf Değiştir" type="button">
+<span class="material-symbols-outlined text-[18px]">photo_camera</span>
+</button>
+</div>
+<div class="flex flex-col">
+<span class="font-caption-caps text-caption-caps text-gold-deep font-bold uppercase">Yönetim Kurulu Başkanı</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">Prof. Dr. Mehmet Sezai Türk</span>
+<span class="font-body-sm text-body-sm text-slate-muted">Ankara Üniversitesi İletişim Fakültesi</span>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full md:w-72">
+<input class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface px-2.5 py-1.5 rounded focus:outline-none shadow-sm" type="text" value="Prof. Dr. Mehmet Sezai Türk"/>
+<input class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface px-2.5 py-1.5 rounded focus:outline-none shadow-sm" type="text" value="Yönetim Kurulu Başkanı"/>
+</div>
+<div class="flex items-center gap-2 self-end md:self-center">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-lowest text-primary hover:bg-surface-container-high font-label-sm text-label-sm font-semibold shadow-sm transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Biyografi &amp; Detay</span>
+</button>
+<button class="p-1.5 rounded-lg text-slate-muted hover:text-error hover:bg-error-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Member 2: Vice President -->
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col md:flex-row items-center gap-5 justify-between shadow-sm">
+<div class="flex items-center gap-4 w-full md:w-auto">
+<div class="relative w-16 h-16 rounded-full overflow-hidden shrink-0 shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Refined male corporate communications director in mid-forties with bespoke tailored dark blue blazer, standing in a contemporary corporate diplomacy library. Sharp focus, subtle executive posture, high-end editorial lighting, professional headshot." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkUjhn-EeuAE_CYJJ_BdE7yiHNRqfQtUPmOBrvacVGsdZ9MrbXJEDpRxZ9G9S2SW9LBvyjw6tKSf_QlOTBOBXynL974bDl40sUWnd6PYM1a3eePBecFlPctLCnAyPhPMNa7T9eEprrV8LlvSz7xvAQM8RqtYzGLVrHpYouuYQuOqepPKvEE3mfXXrQqDvLLiu6UYn_ghQIR8pEfubeyL3QF6Z2IgPwizObtRWwpbob8xXnQPYHwjGr"/>
+<button class="absolute inset-0 bg-primary/50 text-on-primary opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center" title="Fotoğraf Değiştir" type="button">
+<span class="material-symbols-outlined text-[18px]">photo_camera</span>
+</button>
+</div>
+<div class="flex flex-col">
+<span class="font-caption-caps text-caption-caps text-secondary font-bold uppercase">Başkan Yardımcısı (Kurumsal İlişkiler)</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">Kürşat Aydoğdu</span>
+<span class="font-body-sm text-body-sm text-slate-muted">Stratejik İletişim &amp; Kamu Danışmanı</span>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full md:w-72">
+<input class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface px-2.5 py-1.5 rounded focus:outline-none shadow-sm" type="text" value="Kürşat Aydoğdu"/>
+<input class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface px-2.5 py-1.5 rounded focus:outline-none shadow-sm" type="text" value="Başkan Yardımcısı"/>
+</div>
+<div class="flex items-center gap-2 self-end md:self-center">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-lowest text-primary hover:bg-surface-container-high font-label-sm text-label-sm font-semibold shadow-sm transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Biyografi &amp; Detay</span>
+</button>
+<button class="p-1.5 rounded-lg text-slate-muted hover:text-error hover:bg-error-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Member 3: General Secretary -->
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col md:flex-row items-center gap-5 justify-between shadow-sm">
+<div class="flex items-center gap-4 w-full md:w-auto">
+<div class="relative w-16 h-16 rounded-full overflow-hidden shrink-0 shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Distinguished professional Turkish woman in her late thirties with modern tailored attire, elegant minimal gold jewelry, looking thoughtfully toward the lens. Editorial portrait inside a bright modern conference boardroom in Ankara, crisp lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHQ3E_TnxjlDqWijzbEXMZcJXRufCJI6fbowkbayYzSGwrNWQj2PQ5L5lJbzJ8yYwfox9TujaLDUWsm8kgYNaVLl6jZkpFUzC0OGp7pVi4gksifa8O37IzTpcM0HTWzBWH_P-g23QPhAZ151CMBZ_MnddZ4EnUmsHYnlSQICHergfpLcA5Ng26mdMn8xW1TQ2WUO5l7h6Qz-QxL5u8QzbvsppetSZqi-m36-DTuyR2o5GqFZkV97eh"/>
+<button class="absolute inset-0 bg-primary/50 text-on-primary opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center" title="Fotoğraf Değiştir" type="button">
+<span class="material-symbols-outlined text-[18px]">photo_camera</span>
+</button>
+</div>
+<div class="flex flex-col">
+<span class="font-caption-caps text-caption-caps text-secondary font-bold uppercase">Genel Sekreter &amp; Basın Sözcüsü</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">Selin Doğanay</span>
+<span class="font-body-sm text-body-sm text-slate-muted">Medya İletişimi Direktörü</span>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full md:w-72">
+<input class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface px-2.5 py-1.5 rounded focus:outline-none shadow-sm" type="text" value="Selin Doğanay"/>
+<input class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface px-2.5 py-1.5 rounded focus:outline-none shadow-sm" type="text" value="Genel Sekreter"/>
+</div>
+<div class="flex items-center gap-2 self-end md:self-center">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-lowest text-primary hover:bg-surface-container-high font-label-sm text-label-sm font-semibold shadow-sm transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Biyografi &amp; Detay</span>
+</button>
+<button class="p-1.5 rounded-lg text-slate-muted hover:text-error hover:bg-error-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 3: Duyuru & Etkinlik Afişi Yönetimi -->
+<div class="bg-surface-container-lowest p-7 rounded-xl shadow-sm flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-6 bg-gold-deep rounded-full"></span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary font-bold">3. Zirve &amp; Etkinlik Afişi Yönetim Masası</h2>
+<p class="font-body-sm text-body-sm text-slate-muted">Yaklaşan sempozyum afişleri, kayıt kontenjanı ve salon protokol bilgileri</p>
+</div>
+</div>
+<span class="font-caption-caps text-caption-caps bg-surface-ice text-secondary px-3 py-1 rounded-full font-bold">Aktif Zirve Dönemi</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+<div class="md:col-span-4 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-slate-dark font-semibold">Resmi Etkinlik Afişi</span>
+<div class="relative rounded-lg overflow-hidden bg-surface-container shadow-sm group">
+<img class="w-full h-56 object-cover" data-alt="High-end graphic design poster for Ankara Public Relations Summit. Deep cobalt blue background with gold geometric typography lines, subtle map outlines of Turkey's capital, elegant typography reading 2026 Baskent Iletisim Zirvesi, ultra professional corporate event design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqFZoQPU5pb6RV5YtiZd15CP5yVRHEtwsQkxUkbUSE79R-rSCW5im07U_iQMqREuyCny4aLMybTmDk7aTjTJag40zrKOaTWa80MYmLo9zv_myB7D1fHXTQYEY3xTXJMAPJizJZA080AbeBEpedBtGrp0dlUIe1hVH_S4HxBfIPQskx3S72xKk41vW20T28z4iADX_93ECp6jU_foLJWaggO6zaZbyQ8wSz2AIKTeXnCSNFqE88kSFE"/>
+<div class="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="px-3 py-1.5 rounded bg-surface-container-lowest text-primary font-label-sm text-label-sm font-bold shadow-sm" type="button">Afişi Değiştir</button>
+</div>
+</div>
+</div>
+<div class="md:col-span-8 flex flex-col gap-3">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-slate-dark font-semibold">Etkinlik Başlığı</label>
+<input class="bg-surface-container-low font-body-sm text-body-sm text-on-surface px-3 py-2 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm" type="text" value="3. Ulusal Başkent Stratejik İletişim Zirvesi"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-slate-dark font-semibold">Tarih &amp; Saat</label>
+<input class="bg-surface-container-low font-body-sm text-body-sm text-on-surface px-3 py-2 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm" type="text" value="18 Aralık 2026 • 09:30 - 17:30"/>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-slate-dark font-semibold">Konum / Salon</label>
+<input class="bg-surface-container-low font-body-sm text-body-sm text-on-surface px-3 py-2 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm" type="text" value="MEB Şura Salonu, Beşevler"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-slate-dark font-semibold">Kayıt Kontenjanı</label>
+<input class="bg-surface-container-low font-body-sm text-body-sm text-on-surface px-3 py-2 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm" type="text" value="450 Kişi (312 Dolu)"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-slate-dark font-semibold">Protokol Katılımı</label>
+<input class="bg-surface-container-low font-body-sm text-body-sm text-on-surface px-3 py-2 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm" type="text" value="Bakanlık &amp; Basın Heyeti"/>
+</div>
+</div>
+<div class="flex flex-col gap-1 mt-1">
+<label class="font-label-sm text-label-sm text-slate-dark font-semibold">Ana Konuşmacı Vurgusu &amp; Açıklama</label>
+<textarea class="bg-surface-container-low font-body-sm text-body-sm text-on-surface px-3 py-2 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm" rows="2">Cumhurbaşkanlığı İletişim Başkanlığı, RTÜK ve önde gelen iletişim fakülteleri dekanlarının katılımıyla Ankara'da itibar yönetimi masaya yatırılıyor.</textarea>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Real-Time Inbound Submissions & Protocol Desk (4 Cols) -->
+<div class="lg:col-span-4 flex flex-col gap-6">
+<!-- Panel Header & Action -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col gap-5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-pulse"></span>
+<h3 class="font-headline-sm text-headline-sm text-primary font-bold">Gelen Form &amp; Başvurular</h3>
+</div>
+<span class="font-caption-caps text-caption-caps bg-surface-ice text-primary px-2.5 py-1 rounded-full font-bold">Canlı Akış</span>
+</div>
+<p class="font-body-sm text-body-sm text-slate-muted">
+          Sitedeki başvuru formları, protokol randevuları ve akademik üyelik belgeleri anlık olarak bu masaya düşer.
+        </p>
+<!-- Submissions Feed List -->
+<div class="flex flex-col gap-4">
+<!-- Request 1: Academic Membership -->
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold font-label-md text-label-md">
+                  AK
+                </div>
+<div>
+<div class="font-label-md text-label-md text-on-surface font-bold leading-tight">Doç. Dr. Aylin Karaer</div>
+<span class="font-caption-caps text-caption-caps text-slate-muted">Hacettepe Üniversitesi • 14 dk önce</span>
+</div>
+</div>
+<span class="font-caption-caps text-caption-caps bg-surface-ice text-primary px-2 py-0.5 rounded-full font-semibold">Akademik Üyelik</span>
+</div>
+<p class="font-body-sm text-body-sm text-slate-dark">
+              "İletişim Sosyolojisi ve Dijital Halkla İlişkiler alanındaki araştırmalarım doğrultusunda AHİD asil üyeliğine başvurmaktayım. Belgeler ektedir."
+            </p>
+<div class="flex items-center justify-between pt-1">
+<button class="flex items-center gap-1 font-label-sm text-label-sm text-secondary hover:text-primary font-semibold" type="button">
+<span class="material-symbols-outlined text-[16px]">attach_file</span>
+<span>Evrakları İncele (3 PDF)</span>
+</button>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-error hover:bg-error-container font-label-sm text-label-sm font-semibold transition-colors" type="button">
+                  Reddet
+                </button>
+<button class="px-2.5 py-1 rounded bg-primary text-on-primary hover:bg-primary-container font-label-sm text-label-sm font-semibold transition-colors" type="button">
+                  Onayla
+                </button>
+</div>
+</div>
+</div>
+<!-- Request 2: Protocol Appointment (Urgent) -->
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-full bg-secondary text-on-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-on-surface font-bold leading-tight">T.C. İletişim Başkanlığı</div>
+<span class="font-caption-caps text-caption-caps text-slate-muted">Protokol Masası • 42 dk önce</span>
+</div>
+</div>
+<span class="font-caption-caps text-caption-caps bg-error-container text-on-error-container px-2 py-0.5 rounded-full font-bold">Öncelikli</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-lowest flex flex-col gap-1">
+<span class="font-caption-caps text-caption-caps text-slate-muted uppercase">Talep Edilen Randevu</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">24 Kasım 2026 • Saat 14:00 (4 Kişilik Heyet)</span>
+<span class="font-body-sm text-body-sm text-slate-dark text-[13px]">Konu: Kamu İletişim Standartları Çalıştayı ortak protokol görüşmesi.</span>
+</div>
+<div class="flex items-center gap-2 pt-1">
+<button class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-on-secondary hover:bg-primary font-label-sm text-label-sm font-semibold transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">event_available</span>
+<span>Randevu Onayla &amp; Takvime Ekle</span>
+</button>
+</div>
+</div>
+<!-- Request 3: Student Accreditation -->
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-full bg-surface-container-highest text-primary flex items-center justify-center font-bold font-label-md text-label-md">
+                  MY
+                </div>
+<div>
+<div class="font-label-md text-label-md text-on-surface font-bold leading-tight">Mert Can Yıldız</div>
+<span class="font-caption-caps text-caption-caps text-slate-muted">Gazi Üniv. İletişim • 1 saat önce</span>
+</div>
+</div>
+<span class="font-caption-caps text-caption-caps bg-gold-light text-gold-deep px-2 py-0.5 rounded-full font-bold">Öğrenci Kolu</span>
+</div>
+<p class="font-body-sm text-body-sm text-slate-dark">
+              "Genç İletişimciler Akreditasyonu ve Zirve Gönüllü Ekibi için başvurumu sunarım. Öğrenci belgem eklenmiştir."
+            </p>
+<div class="flex items-center justify-between pt-1">
+<span class="font-caption-caps text-caption-caps text-slate-muted">Sicil No: #2026-STU-88</span>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-lowest text-primary hover:bg-surface-ice font-label-sm text-label-sm font-semibold transition-colors shadow-sm" type="button">
+                Detay &amp; Ön Onay
+              </button>
+</div>
+</div>
+</div>
+<!-- Export & Bulk Actions -->
+<div class="pt-2 flex flex-col gap-2">
+<button class="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-surface-container-low text-primary hover:bg-surface-ice font-label-md text-label-md font-semibold transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Tüm Başvuruları Excel/CSV Olarak İndir</span>
+</button>
+<a class="text-center font-label-sm text-label-sm text-secondary hover:underline py-1 font-semibold" href="#">
+            Tüm 14 Başvuruyu Arşivde Gör →
+          </a>
+</div>
+</div>
+<!-- Quick Media Library Mini-Widget -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary">photo_library</span>
+<span class="font-label-md text-label-md text-primary font-bold">Son Eklenen Fotoğraflar</span>
+</div>
+<a class="font-caption-caps text-caption-caps text-secondary font-bold hover:underline" href="#">Tümünü Aç</a>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div class="relative rounded-lg overflow-hidden h-20 bg-surface-container group shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Ankara press conference hall with microphones bearing AHID logo, journalists and broadcast cameras in soft focus background, crisp institutional public relations event atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCD6IWqb74oWz0X85Oj4AiTr2FzW_FFOo3eEB3Ak3wD9vYc-0U205XN5jS5iCX475MJx06tzS-HPEp0Zl51D-yMtcaylJLjzavqpJInAUt9B-q90-Lpzcql2d66kNsstEEybm0y-uk3Pz-Ioc4VJOEJUMvTkN9bJ7jw_yIejJHJ2vmPet5k5DyCtkUZ8xik5NJehY9aael8bWHFsHjLWz6mINBsTqxlpRZCkf7DwFR5rJN9pzrvSRcU"/>
+<div class="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[16px]">visibility</span>
+</div>
+</div>
+<div class="relative rounded-lg overflow-hidden h-20 bg-surface-container group shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Official ceremonial treaty signing ceremony in Ankara diplomatic lounge, crystal water glasses, dark leather document holders, distinguished communicators exchanging folders." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBB5JLTGUK3mTN2GgogIrjPBeLNzSuYHgL38eACVUs_ZQ98yJ4WRNya9JV6WDj9ypGgnfcfZAD4ls3KgPISmlkJ8TnATG3VSjXswBchr0PofvksSjacKSg4Kc03pAKEIGeZ9GIko5vxwvUieow4hiu9zQxWSOqoYPKX6jrh9jSnKZ3EJ1yn7oF13LI31GI8YGuUJjaFV3iIab3Eu2WPGZXK0ILkJaGSv4NFSHaZ3YTLeAOIKsGFXRs2"/>
+<div class="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[16px]">visibility</span>
+</div>
+</div>
+<div class="relative rounded-lg overflow-hidden h-20 bg-surface-container group shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Modern architectural glass atrium of a corporate communications headquarters in Ankara with morning sun rays cutting through, clean lines, serene executive mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHvY6Axz8ZEUMBPG5_ZtI0Nsz4-NR8Me4z_XbYc69dwxqCd2u7KNHhHOBlKXfTtDhnswPdVyZwy4E1uIsw_3utAfFVspFG49X6V9p1dw8dSudboN2dAa0R_eS4ZOXIZYMIp6Ltr1w1KXmb9Ej0lt-SmTmnTH_P-yb8hXNCZiK0JR1707HsV7nncUDRnGYp9kvc7zMY-lPBsEBPl1w5vx6CrHdOSRGQdG6Wm628ZjmFeqsLAxZ9dq6E"/>
+<div class="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[16px]">visibility</span>
+</div>
+</div>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-low flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-slate-dark">Doğrudan Medya Yükle:</span>
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-primary font-label-sm text-label-sm font-semibold shadow-sm hover:bg-surface-ice transition-colors" type="button">
+            + Hızlı Yükle
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Persistent Floating Bottom Quick-Save & Toast Bar -->
+<div class="sticky bottom-4 z-30 w-full bg-surface-container-lowest/95 backdrop-blur-xl p-4 rounded-xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-ice text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">sync</span>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface font-bold">Sayfa Değişiklikleri Hazır</div>
+<p class="font-caption-caps text-caption-caps text-slate-muted">Canlı sitede yayına almak için onaylayın veya taslak olarak saklayın.</p>
+</div>
+</div>
+<div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+<button class="px-4 py-2 rounded-lg bg-surface-container-low text-slate-dark hover:bg-surface-container-high font-label-md text-label-md font-semibold transition-colors" type="button">
+        Taslak Olarak Sakla
+      </button>
+<button class="px-6 py-2 rounded-lg bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold transition-all shadow-md flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">publish</span>
+<span>Canlı Sitede Yayınla</span>
+</button>
+</div>
+</div>
+</div></main></div></body></html>

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import AdminHeader from "@/components/admin/AdminHeader";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -323,27 +325,17 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Backdrop for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-xs"
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 h-full w-72 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}><div className="flex flex-col"><div className="px-6 pt-6 pb-5 flex items-center gap-3 bg-surface-container"><div className="w-10 h-10 rounded-lg bg-white p-1 flex items-center justify-center shadow-sm shrink-0"><img src="/ahid-logo.png" alt="AHİD Logo" className="w-full h-full object-contain" /></div><div className="flex flex-col"><span className="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">AHİD PORTAL</span><span className="font-caption-caps text-caption-caps text-slate-muted uppercase tracking-wider">Yönetim ve CMS Masası</span></div></div><div className="mx-4 mt-4 p-3 rounded-lg bg-surface-ice flex items-center justify-between"><div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span><span className="font-label-sm text-label-sm text-primary font-semibold">Portak Sunucu Aktif</span></div><span className="font-caption-caps text-caption-caps bg-surface-container-lowest text-secondary px-2 py-0.5 rounded-full shadow-sm">v3.4.2</span></div><nav className="flex flex-col gap-1 px-3 mt-4" data-active-classes="bg-primary text-on-primary font-semibold shadow-sm"><a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="genel-bakis" href="#section"><span className="material-symbols-outlined text-[20px]">dashboard</span><span className="font-label-md text-label-md">Genel Bakış</span></a><a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sayfa-icerik-ve-metin-yonetimi" href="#section"><span className="material-symbols-outlined text-[20px]">article</span><span className="font-label-md text-label-md">Sayfa İçerik &amp; Metin</span></a><Link className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="medya-ve-gorsel-kutuphanesi" href="/admin/medya"><span className="material-symbols-outlined text-[20px]">photo_library</span><span className="font-label-md text-label-md">Medya Galerisi</span></Link><a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="uyelik-basvurulari-ve-akreditasyon" href="#section"><span className="material-symbols-outlined text-[20px]">badge</span><span className="font-label-md text-label-md">Üyelik &amp; Akreditasyon</span></a><a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="etkinlik-ve-zirve-yonetimi" href="#section"><span className="material-symbols-outlined text-[20px]">event_available</span><span className="font-label-md text-label-md">Etkinlik &amp; Zirve</span></a><a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="kose-yazilari-ve-yayinlar" href="#section"><span className="material-symbols-outlined text-[20px]">menu_book</span><span className="font-label-md text-label-md">Köşe Yazıları &amp; Yayınlar</span></a><a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="protokol-ve-iletisim-masasi" href="#section"><span className="material-symbols-outlined text-[20px]">contact_mail</span><span className="font-label-md text-label-md">Protokol &amp; İletişim</span></a><a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sistem-ve-guvenlik-ayarlari" href="#section"><span className="material-symbols-outlined text-[20px]">admin_panel_settings</span><span className="font-label-md text-label-md">Sistem &amp; Güvenlik</span></a></nav></div><div className="p-4 bg-surface-container-lowest m-3 rounded-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div className="flex items-center justify-between mb-2"><span className="font-caption-caps text-caption-caps text-slate-muted uppercase">Kurumsal Güven</span><span className="material-symbols-outlined text-[16px] text-secondary">verified_user</span></div><p className="font-body-sm text-body-sm text-slate-dark leading-tight">Resmi Protokol Veritabanı ve KEP Altyapısı Korunmaktadır.</p></div></aside>
-
-      {/* Header */}
-      <header className="fixed top-0 left-0 lg:left-72 right-0 h-16 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-4 lg:px-8"><div className="flex items-center gap-3 sm:gap-4 min-w-0">
-    <button
-      onClick={() => setSidebarOpen(!sidebarOpen)}
-      className="lg:hidden p-2 text-primary hover:bg-surface-ice rounded-lg transition-colors cursor-pointer shrink-0"
-      aria-label="Menüyü Aç"
-      type="button"
-    >
-      <span className="material-symbols-outlined text-2xl">{sidebarOpen ? "close" : "menu"}</span>
-    </button><div className="flex items-center gap-2 text-slate-muted font-label-sm text-label-sm truncate"><span className="material-symbols-outlined text-[18px] shrink-0">home</span><span>/</span><span className="text-on-surface font-semibold truncate">Yönetim Portalı</span></div><div className="hidden md:flex relative items-center"><span className="material-symbols-outlined absolute left-3 text-slate-muted text-[18px]">search</span><input className="bg-surface-container-low text-on-surface font-body-sm text-body-sm rounded-lg pl-9 pr-4 py-1.5 focus:outline-none focus:bg-surface-container-lowest transition-all w-60 lg:w-72" placeholder="İçerik, üye veya protokol ara..." type="text"/></div></div><div className="flex items-center gap-2 sm:gap-4 shrink-0"><div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-surface-ice text-primary"><span className="w-2 h-2 rounded-full bg-secondary"></span><span className="font-caption-caps text-caption-caps">DERBİS &amp; KEP ENTEGRE</span></div><button className="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span className="material-symbols-outlined text-[22px]">notifications</span><span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></button><div className="hidden sm:block h-6 w-px bg-surface-container-highest"></div><div className="flex items-center gap-2 sm:gap-3"><div className="hidden sm:flex flex-col text-right"><span className="font-label-sm text-label-sm text-on-surface font-bold leading-tight">Ahmet Yılmaz</span><span className="font-caption-caps text-caption-caps text-slate-muted">Genel Sekreterlik</span></div><div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span className="material-symbols-outlined text-on-primary text-[18px]">person</span></div><Link className="p-1.5 rounded-lg text-slate-muted hover:bg-error-container hover:text-on-error-container transition-colors" href="/login" title="Güvenli Çıkış"><span className="material-symbols-outlined text-[20px]">logout</span></Link></div></div></header>
+      {/* Admin Sidebar & Header */}
+      <AdminSidebar
+        currentPath="/admin"
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+      <AdminHeader
+        title="Genel Bakış & CMS Masası"
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
 
       {/* Main Content Area */}
       <main className="relative pt-20 lg:ml-72 bg-background min-h-screen px-4 lg:px-8 py-6"><div className="flex flex-col w-full gap-8">
@@ -380,7 +372,7 @@ export default function AdminPage() {
 {/*  Operational Metric Tiles  */}
 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
 {/*  Metric 1  */}
-<div className="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group">
+<Link href="/admin/uyelik" className="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-[#002869]/20">
 <div className="flex items-center justify-between">
 <span className="font-caption-caps text-caption-caps text-slate-muted uppercase">Üyelik Aday Masası</span>
 <span className="p-2 rounded-lg bg-surface-ice text-primary">
@@ -399,12 +391,13 @@ export default function AdminPage() {
 <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
 <div className="bg-gold-deep h-full rounded-full" style={{ width: applications.length > 0 ? `${Math.min(100, applications.length * 10)}%` : "10%" }}></div>
 </div>
-<span className="font-label-sm text-label-sm text-slate-dark">
-  {applications.filter(a => a.status === 'derbis_query').length} dosya DERBİS sicil sorgusunda
+<span className="font-label-sm text-label-sm text-slate-dark flex items-center justify-between">
+  <span>{applications.filter(a => a.status === 'derbis_query').length} dosya DERBİS sicil sorgusunda</span>
+  <span className="text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform">&rarr;</span>
 </span>
-</div>
+</Link>
 {/*  Metric 2  */}
-<div className="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group">
+<Link href="/admin/protokol" className="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-[#002869]/20">
 <div className="flex items-center justify-between">
 <span className="font-caption-caps text-caption-caps text-slate-muted uppercase">Protokol &amp; İletişim</span>
 <span className="p-2 rounded-lg bg-surface-ice text-secondary">
@@ -423,10 +416,13 @@ export default function AdminPage() {
 <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
 <div className="bg-secondary h-full rounded-full" style={{ width: messages.length > 0 ? `${Math.min(100, messages.length * 15)}%` : "10%" }}></div>
 </div>
-<span className="font-label-sm text-label-sm text-slate-dark">Gelen mesajlar ve randevu talepleri</span>
-</div>
+<span className="font-label-sm text-label-sm text-slate-dark flex items-center justify-between">
+  <span>Gelen mesajlar ve randevu talepleri</span>
+  <span className="text-xs font-bold text-secondary group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+</span>
+</Link>
 {/*  Metric 3  */}
-<div className="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group">
+<Link href="/admin/yazilar" className="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-[#002869]/20">
 <div className="flex items-center justify-between">
 <span className="font-caption-caps text-caption-caps text-slate-muted uppercase">Yayın &amp; Makaleler</span>
 <span className="p-2 rounded-lg bg-surface-ice text-primary">
@@ -443,10 +439,13 @@ export default function AdminPage() {
 <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
 <div className="bg-primary h-full rounded-full" style={{ width: articlesCount > 0 ? `${Math.min(100, articlesCount * 12)}%` : "10%" }}></div>
 </div>
-<span className="font-label-sm text-label-sm text-slate-dark">Köşe yazıları ve akademik makaleler</span>
-</div>
+<span className="font-label-sm text-label-sm text-slate-dark flex items-center justify-between">
+  <span>Köşe yazıları ve akademik makaleler</span>
+  <span className="text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+</span>
+</Link>
 {/*  Metric 4  */}
-<div className="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group">
+<Link href="/admin/etkinlikler" className="bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col justify-between gap-3 relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-[#002869]/20">
 <div className="flex items-center justify-between">
 <span className="font-caption-caps text-caption-caps text-slate-muted uppercase">Etkinlikler &amp; Zirve</span>
 <span className="p-2 rounded-lg bg-surface-ice text-secondary">
@@ -462,8 +461,11 @@ export default function AdminPage() {
 <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
 <div className="bg-secondary-container h-full rounded-full" style={{ width: eventsCount > 0 ? `${Math.min(100, eventsCount * 20)}%` : "10%" }}></div>
 </div>
-<span className="font-label-sm text-label-sm text-slate-dark">Zirve ve masterclass kayıtları açık</span>
-</div>
+<span className="font-label-sm text-label-sm text-slate-dark flex items-center justify-between">
+  <span>Zirve ve masterclass kayıtları açık</span>
+  <span className="text-xs font-bold text-secondary group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+</span>
+</Link>
 </div>
 {/*  Workspace Tabs  */}
 <div className="flex flex-wrap items-center gap-2 border-b-0 bg-surface-container-low p-1.5 rounded-xl w-fit">

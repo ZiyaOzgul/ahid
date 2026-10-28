@@ -695,12 +695,8 @@ export default function IletisimPage() {
 <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-4">
 <button className="w-full inline-flex items-center justify-center gap-2 bg-[#c25e00] hover:bg-[#a04703] text-white font-semibold px-6 py-3.5 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 disabled:opacity-50 cursor-pointer" disabled={contactStatus === "loading"} type="submit">
 <span className="material-symbols-outlined text-base">send</span>
-<span className="">{contactStatus === "loading" ? "İletiliyor..." : "Mesajı Güvenli İlet"}</span>
+<span className="">{contactStatus === "loading" ? "İletiliyor..." : "Mesajı İlet"}</span>
 </button>
-<div className="flex items-center gap-2 text-caption-caps font-caption-caps text-slate-muted">
-<span className="material-symbols-outlined text-base text-secondary">verified_user</span>
-<span className="">256-Bit SSL Uçtan Uca Şifreli İletim</span>
-</div>
 </div>
 </form>
 </div>

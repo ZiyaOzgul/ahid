@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import AdminHeader from "@/components/admin/AdminHeader";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 interface MediaAsset {
   id: number;
@@ -195,159 +197,17 @@ export default function AdminMedyaPage() {
         className="hidden"
       />
 
-      {/* Mobile Sidebar Backdrop */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-xs"
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed left-0 top-0 h-full w-72 bg-[#f0f3ff] shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto transition-transform duration-300 lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex flex-col">
-          <div className="px-6 pt-6 pb-5 flex items-center gap-3 bg-[#e7eeff]">
-            <Link
-              href="/"
-              className="w-10 h-10 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0"
-            >
-              <img
-                src="/ahid-logo.png"
-                alt="AHİD Logo"
-                className="w-full h-full object-contain"
-              />
-            </Link>
-            <div className="flex flex-col">
-              <span className="font-['Plus_Jakarta_Sans'] text-lg text-[#002869] tracking-tight font-bold">
-                AHİD PORTAL
-              </span>
-              <span className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
-                Yönetim ve CMS Masası
-              </span>
-            </div>
-          </div>
-
-          <div className="mx-4 mt-4 p-3 rounded-lg bg-[#ebf2fc] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#225aba] animate-pulse" />
-              <span className="text-xs text-[#002869] font-semibold">
-                Supabase Storage Aktif
-              </span>
-            </div>
-            <span className="text-[11px] font-bold bg-white text-[#225aba] px-2 py-0.5 rounded-full shadow-xs">
-              CDN
-            </span>
-          </div>
-
-          <nav className="flex flex-col gap-1 px-3 mt-4 text-sm font-semibold">
-            <Link
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#434652] hover:bg-[#dee8ff] hover:text-[#101c2e] transition-all"
-              href="/admin"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                dashboard
-              </span>
-              <span>Genel Bakış &amp; CMS</span>
-            </Link>
-            <Link
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#002869] text-white shadow-xs transition-all"
-              href="/admin/medya"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                photo_library
-              </span>
-              <span>Medya &amp; Fotoğraf Yöneticisi</span>
-            </Link>
-            <Link
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#434652] hover:bg-[#dee8ff] hover:text-[#101c2e] transition-all"
-              href="/haberler"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                newspaper
-              </span>
-              <span>Haberler &amp; Duyurular</span>
-            </Link>
-            <Link
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#434652] hover:bg-[#dee8ff] hover:text-[#101c2e] transition-all"
-              href="/kaynaklar"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                folder_open
-              </span>
-              <span>Kaynaklar &amp; Mevzuat</span>
-            </Link>
-            <Link
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#434652] hover:bg-[#dee8ff] hover:text-[#101c2e] transition-all"
-              href="/baskanlar-ve-kurullar"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                supervisor_account
-              </span>
-              <span>Başkanlar &amp; Kurullar</span>
-            </Link>
-            <Link
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#434652] hover:bg-[#dee8ff] hover:text-[#101c2e] transition-all"
-              href="/uye-paneli"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                badge
-              </span>
-              <span>Üye Paneli Önizleme</span>
-            </Link>
-          </nav>
-        </div>
-
-        <div className="p-4 bg-white m-3 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-[#64748b] uppercase">
-              Kurumsal Güven
-            </span>
-            <span className="material-symbols-outlined text-[16px] text-[#225aba]">
-              verified_user
-            </span>
-          </div>
-          <p className="text-xs text-[#334155] leading-tight">
-            Supabase Storage (`media` bucket) ve DERBİS Medya Kütüphanesi
-            aktif.
-          </p>
-        </div>
-      </aside>
-
-      {/* Header */}
-      <header className="fixed top-0 left-0 lg:left-72 right-0 h-16 bg-white/90 backdrop-blur-xl shadow-xs z-40 flex items-center justify-between px-4 lg:px-8">
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-2 text-[#002869] hover:bg-[#ebf2fc] rounded-lg cursor-pointer shrink-0"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-2xl">
-              {sidebarOpen ? "close" : "menu"}
-            </span>
-          </button>
-          <div className="flex items-center gap-1.5 sm:gap-2 text-[#64748b] text-xs font-semibold truncate">
-            <Link href="/admin" className="hidden sm:inline hover:text-[#002869]">
-              Yönetim Portalı
-            </Link>
-            <span className="hidden sm:inline">/</span>
-            <span className="text-[#101c2e] font-bold truncate">
-              Medya &amp; Fotoğraf Galerisi
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href="/admin"
-            className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#ebf2fc] text-[#002869] text-xs font-bold hover:bg-[#dee8ff] whitespace-nowrap"
-          >
-            ← CMS Masası
-          </Link>
-        </div>
-      </header>
+      {/* Admin Sidebar & Header */}
+      <AdminSidebar
+        currentPath="/admin/medya"
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+      <AdminHeader
+        title="Medya & Fotoğraf Yöneticisi"
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
 
       {/* Main Content */}
       <main className="relative pt-20 lg:ml-72 bg-[#f9f9ff] min-h-screen px-4 lg:px-8 py-6">

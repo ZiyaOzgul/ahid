@@ -484,10 +484,6 @@ export default function UyelikPage() {
 <h3 className="font-headline-lg text-headline-lg font-bold text-on-primary mt-1">Üyelik &amp; Akreditasyon Başvuru Formu</h3>
 <p className="font-body-sm text-body-sm text-on-primary-container mt-1">Tüm alanları eksiksiz doldurunuz. Bilgileriniz KVKK ve AHİD Veri Güvenliği Politikası uyarınca korunmaktadır.</p>
 </div>
-<div className="flex items-center gap-space-xs self-start md:self-auto bg-surface-container-highest/20 px-3 py-1.5 rounded">
-<span className="material-symbols-outlined text-sm text-gold-light">lock</span>
-<span className="font-caption-caps text-caption-caps text-on-primary">256-BIT SSL ŞİFRELİ</span>
-</div>
 </div>
 {/*  Step Indicators Bar  */}
 <div className="grid grid-cols-2 md:grid-cols-4 gap-space-sm mt-space-xl pt-space-md">

@@ -280,21 +280,41 @@ export default function HomePage() {
 </div>
 </div>
 {/*  Partner Badges Stream  */}
-<div className="mt-space-xl pt-space-lg bg-primary-container/40 rounded-xl px-space-lg py-space-md flex flex-wrap items-center justify-between gap-space-md">
-<span className="font-caption-caps text-caption-caps text-gold-light uppercase tracking-widest font-bold">Stratejik Paydaşlar:</span>
-<div className="flex flex-wrap items-center gap-space-xl font-label-md text-label-md text-on-primary/80">
-<span className="hover:text-gold-light transition-colors flex items-center gap-1">
-<span className="material-symbols-outlined text-sm">account_balance</span> Ankara Kent Konseyi
-          </span>
-<span className="hover:text-gold-light transition-colors flex items-center gap-1">
-<span className="material-symbols-outlined text-sm">school</span> Ankara Üniversitesi İletişim Fakültesi
-          </span>
-<span className="hover:text-gold-light transition-colors flex items-center gap-1">
-<span className="material-symbols-outlined text-sm">menu_book</span> Hacı Bayram Veli Üniversitesi
-          </span>
-<span className="hover:text-gold-light transition-colors flex items-center gap-1">
-<span className="material-symbols-outlined text-sm">hub</span> Türkiye İtibar Enstitüsü
-          </span>
+<div className="mt-space-xl bg-primary-container/40 border border-white/10 rounded-xl px-space-lg py-space-md flex flex-wrap items-center justify-between gap-space-md">
+<span className="font-caption-caps text-caption-caps text-gold-light uppercase tracking-widest font-bold shrink-0">Stratejik Paydaşlar:</span>
+<div className="flex flex-wrap items-center gap-x-8 gap-y-4 font-label-md text-label-md text-on-primary/90">
+<span className="hover:text-gold-light transition-all flex items-center gap-2.5 group">
+<img
+  src="/partners/ankara-kent-konseyi-icon.png"
+  alt="Ankara Kent Konseyi Logosu"
+  className="w-8 h-8 object-contain brightness-0 invert opacity-95 group-hover:scale-105 transition-transform shrink-0"
+/>
+<span className="font-semibold">Ankara Kent Konseyi</span>
+</span>
+<span className="hover:text-gold-light transition-all flex items-center gap-2.5 group">
+<img
+  src="/partners/ankara-universitesi.png"
+  alt="Ankara Üniversitesi Logosu"
+  className="w-8 h-8 object-contain drop-shadow-xs group-hover:scale-105 transition-transform shrink-0"
+/>
+<span className="font-semibold">Ankara Üniversitesi İletişim Fakültesi</span>
+</span>
+<span className="hover:text-gold-light transition-all flex items-center gap-2.5 group">
+<img
+  src="/partners/haci-bayram-veli-icon.svg"
+  alt="Ankara Hacı Bayram Veli Üniversitesi Logosu"
+  className="w-8 h-8 object-contain drop-shadow-xs group-hover:scale-105 transition-transform shrink-0"
+/>
+<span className="font-semibold">Hacı Bayram Veli Üniversitesi</span>
+</span>
+<span className="hover:text-gold-light transition-all flex items-center gap-2.5 group">
+<img
+  src="/partners/turkiye-itibar-enstitusu-icon.png"
+  alt="Türkiye İtibar Enstitüsü Logosu"
+  className="w-8 h-7 object-contain opacity-95 group-hover:scale-105 transition-transform shrink-0"
+/>
+<span className="font-semibold">Türkiye İtibar Enstitüsü</span>
+</span>
 </div>
 </div>
 </div>

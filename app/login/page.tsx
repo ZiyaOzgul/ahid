@@ -76,14 +76,10 @@ export default function LoginPage() {
 
       <main className="w-full max-w-lg mx-auto bg-surface-container-lowest p-8 rounded-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div className="flex flex-col w-full">
 {/*  Top Sovereign Affiliation & Certification Bar  */}
-<div className="flex items-center justify-between pb-4 mb-6 bg-surface-container-low p-3 rounded-lg shadow-sm">
+<div className="flex items-center justify-center pb-4 mb-6 bg-surface-container-low p-3 rounded-lg shadow-sm">
 <div className="flex items-center gap-2">
 <span className="material-symbols-outlined text-secondary text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance</span>
-<span className="font-caption-caps text-caption-caps uppercase tracking-wider text-slate-dark">T.C. İÇİŞLERİ BAKANLIĞI DERBİS &amp; E-DEVLET ENTEGRE DERNEK YÖNETİM PORTALI</span>
-</div>
-<div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-ice text-primary">
-<span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
-<span className="font-label-sm text-label-sm font-semibold tracking-wide uppercase">256-BIT SSL</span>
+<span className="font-caption-caps text-caption-caps uppercase tracking-wider text-slate-dark">AHİD KURUMSAL YÖNETİM &amp; ÜYE PORTALI</span>
 </div>
 </div>
 {/*  Institutional Crest & Identity Header  */}
@@ -234,20 +230,14 @@ export default function LoginPage() {
   </div>
   <span className="material-symbols-outlined text-[#002869] text-[20px]">open_in_new</span>
 </Link>
-{/*  Security Protocol & Legal Governance Accordion/Notice  */}
-<div className="mt-6 pt-4 bg-surface-canvas rounded-lg p-3.5 space-y-2">
-<div className="flex items-start gap-2 text-slate-dark">
-<span className="material-symbols-outlined text-secondary text-[18px] shrink-0 mt-0.5">verified</span>
-<p className="font-body-sm text-[12px] leading-relaxed text-slate-muted">
-<strong className="text-slate-dark font-semibold">KVKK 6698 &amp; 5651 Sayılı Kanun Uyarınca:</strong> Bu portala yapılan tüm oturum açma girişimleri; IP adresi, zaman damgası ve donanım parmak izi ile kriptografik olarak kaydedilmektedir. Yetkisiz giriş teşebbüsleri TCK Madde 243 kapsamında yasal kovuşturmaya tabidir.
-      </p>
-</div>
-<div className="flex items-center justify-between pt-2 border-t border-surface-container font-caption-caps text-[11px] text-slate-muted">
+{/*  Support Info  */}
+<div className="mt-6 bg-surface-canvas rounded-lg p-3.5">
+<div className="flex items-center justify-between font-caption-caps text-[11px] text-slate-muted">
 <span className="flex items-center gap-1 text-slate-dark font-semibold">
 <span className="material-symbols-outlined text-[14px] text-primary">support_agent</span>
-        Dahili Destek: +90 (312) 231 90 90 (Dahili: 101)
+        İletişim &amp; Destek: +90 (312) 231 90 90
       </span>
-<span className="text-tertiary-container font-bold">DERBİS Protokol No: AHİD-06-1990</span>
+<span className="text-tertiary-container font-bold">AHİD Genel Sekreterlik</span>
 </div>
 </div>
 </div>

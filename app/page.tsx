@@ -74,6 +74,53 @@ function getArticleBucket(category?: string): "usta_saygi" | "akademik" | "kose_
   return "kose_yazisi";
 }
 
+interface HomeNewsItem {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  summary: string | null;
+  image_url: string | null;
+  published_at: string | null;
+  is_member_only?: boolean | null;
+  locked?: boolean;
+}
+
+interface HomeArticleItem {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  author_name: string;
+  author_title: string | null;
+  author_avatar: string | null;
+  summary: string | null;
+  read_time: string | null;
+  published_at: string | null;
+  image_url: string | null;
+}
+
+interface HomeEventItem {
+  id: number;
+  title: string;
+  category: string;
+  event_date: string;
+  event_time: string | null;
+  location: string | null;
+  summary: string | null;
+  description: string | null;
+  image_url: string | null;
+  is_featured: boolean | null;
+  registration_open?: boolean | null;
+}
+
+function getInitials(name?: string | null): string {
+  if (!name) return "AH";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] || ""}${parts[parts.length - 1][0] || ""}`.toUpperCase();
+}
+
 export default function HomePage() {
   const [cms, setCms] = useState<Record<string, string>>({});
   const [liveStats, setLiveStats] = useState<{
@@ -96,11 +143,12 @@ export default function HomePage() {
   });
 
   const [activeFilter, setActiveFilter] = useState<
-    "Tümü" | "Köşe Yazıları" | "Usta'ya Saygı" | "Akademik"
+    "Tümü" | "Duyuru" | "Bülten" | "Basın & Etkinlik"
   >("Tümü");
   const [eventTab, setEventTab] = useState<"upcoming" | "past">("upcoming");
-  const [news, setNews] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [newsItems, setNewsItems] = useState<HomeNewsItem[]>([]);
+  const [articles, setArticles] = useState<HomeArticleItem[]>([]);
+  const [events, setEvents] = useState<HomeEventItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactForm, setContactForm] = useState({
     name: "",
@@ -113,49 +161,40 @@ export default function HomePage() {
     text: string;
   } | null>(null);
 
-  const [todayMs, setTodayMs] = useState<number | null>(null);
+  const [todayMs, setTodayMs] = useState<number>(0);
 
   useEffect(() => {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    setTodayMs(todayStart.getTime());
-
+    const todayTimer = window.setTimeout(() => {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      setTodayMs(todayStart.getTime());
+    }, 0);
     Promise.all([
       fetch("/api/cms?page=home").then((res) => res.json()).catch(() => ({})),
-      fetch("/api/articles").then((res) => res.json()).catch(() => ({})),
+      fetch("/api/news?limit=9").then((res) => res.json()).catch(() => ({})),
+      fetch("/api/articles?limit=6").then((res) => res.json()).catch(() => ({})),
       fetch("/api/events").then((res) => res.json()).catch(() => ({})),
     ])
-      .then(([cmsData, articlesData, eventsData]) => {
+      .then(([cmsData, newsData, articlesData, eventsData]) => {
         if (cmsData?.success && cmsData.variables) setCms(cmsData.variables);
-        if (cmsData?.success && cmsData.liveStats) setLiveStats(cmsData.liveStats);
-        if (articlesData?.success && articlesData.articles) setNews(articlesData.articles);
-        if (eventsData?.success && eventsData.events) setEvents(eventsData.events);
+        if (cmsData?.success && cmsData.liveStats) {
+          setLiveStats((prev) => ({ ...prev, ...cmsData.liveStats }));
+        }
+        if (newsData?.success && Array.isArray(newsData.items)) {
+          setNewsItems(newsData.items);
+        }
+        if (articlesData?.success && Array.isArray(articlesData.articles)) {
+          setArticles(articlesData.articles);
+        }
+        if (eventsData?.success && Array.isArray(eventsData.events)) {
+          setEvents(eventsData.events);
+        }
       })
       .finally(() => setLoading(false));
+    return () => window.clearTimeout(todayTimer);
   }, []);
 
-  useEffect(() => {
-    const rawSeconds = parseInt(cms.summit_countdown_seconds || "0", 10);
-    if (!rawSeconds || rawSeconds <= 0) {
-      setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      return;
-    }
-    let totalSeconds = rawSeconds;
-    const interval = setInterval(() => {
-      if (totalSeconds <= 0) return;
-      totalSeconds--;
-      setCountdown({
-        days: Math.floor(totalSeconds / 86400),
-        hours: Math.floor((totalSeconds % 86400) / 3600),
-        minutes: Math.floor((totalSeconds % 3600) / 60),
-        seconds: totalSeconds % 60,
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [cms.summit_countdown_seconds]);
-
   const displayedEvents = events.filter((ev) => {
-    if (todayMs === null) return eventTab === "upcoming";
     const { timestamp } = parseEventDateInfo(ev.event_date);
     if (eventTab === "past") {
       return timestamp > 0 && timestamp < todayMs;
@@ -170,20 +209,59 @@ export default function HomePage() {
     activeEventsList[0] ||
     (eventTab === "upcoming" ? events.find((e) => e.is_featured) || events[0] : null);
 
-  const filteredNews = news.filter((item) => {
+  useEffect(() => {
+    const targetFromCms = cms.summit_target_date
+      ? new Date(cms.summit_target_date).getTime()
+      : 0;
+    const targetFromEvent = featuredEvent?.event_date
+      ? parseEventDateInfo(featuredEvent.event_date).timestamp
+      : 0;
+    const rawSeconds = parseInt(cms.summit_countdown_seconds || "0", 10);
+
+    const endMs =
+      targetFromCms > Date.now()
+        ? targetFromCms
+        : targetFromEvent > Date.now()
+        ? targetFromEvent
+        : rawSeconds > 0
+        ? Date.now() + rawSeconds * 1000
+        : 0;
+
+    const tick = () => {
+      if (!endMs || endMs <= Date.now()) {
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      const totalSeconds = Math.max(0, Math.floor((endMs - Date.now()) / 1000));
+      setCountdown({
+        days: Math.floor(totalSeconds / 86400),
+        hours: Math.floor((totalSeconds % 86400) / 3600),
+        minutes: Math.floor((totalSeconds % 3600) / 60),
+        seconds: totalSeconds % 60,
+      });
+    };
+
+    const initTimer = window.setTimeout(tick, 0);
+    const interval = window.setInterval(tick, 1000);
+    return () => {
+      window.clearTimeout(initTimer);
+      window.clearInterval(interval);
+    };
+  }, [cms.summit_countdown_seconds, cms.summit_target_date, featuredEvent?.event_date]);
+
+  const filteredNews = newsItems.filter((item) => {
     if (activeFilter === "Tümü") return true;
-    const bucket = getArticleBucket(item.category);
-    if (activeFilter === "Köşe Yazıları") return bucket === "kose_yazisi";
-    if (activeFilter === "Usta'ya Saygı") return bucket === "usta_saygi";
-    if (activeFilter === "Akademik") return bucket === "akademik";
-    return true;
+    const cat = (item.category || "").toLowerCase();
+    if (activeFilter === "Duyuru") return cat.includes("duyuru") || cat.includes("mevzuat");
+    if (activeFilter === "Bülten") return cat.includes("bülten") || cat.includes("rapor");
+    return cat.includes("basın") || cat.includes("etkinlik") || cat.includes("ziyaret");
   });
 
   const featuredArticle =
-    news.find((a) => getArticleBucket(a.category) === "akademik") ||
-    news.find((a) => getArticleBucket(a.category) === "kose_yazisi") ||
-    news[0];
-  const masterTributes = news
+    articles.find((a) => getArticleBucket(a.category) === "akademik") ||
+    articles.find((a) => getArticleBucket(a.category) === "kose_yazisi") ||
+    articles[0];
+  const masterTributes = articles
     .filter((a) => getArticleBucket(a.category) === "usta_saygi")
     .slice(0, 2);
   const spotlightImage =
@@ -471,7 +549,7 @@ export default function HomePage() {
           </h2>
 <div className="p-space-md bg-surface-ice rounded-lg shadow-sm mb-space-md">
 <p className="font-headline-sm text-headline-sm text-primary font-semibold italic">
-              "Etik, şeffaf ve güçlü bir iletişim mesleği için bir aradayız."
+              &quot;Etik, şeffaf ve güçlü bir iletişim mesleği için bir aradayız.&quot;
             </p>
 </div>
 <p className="font-body-md text-body-md text-slate-dark leading-relaxed mb-space-md">
@@ -569,7 +647,7 @@ export default function HomePage() {
 </div>
 {/*  Filter Pills  */}
 <div className="flex flex-wrap items-center gap-2" id="news-filter-group">
-{(["Tümü", "Köşe Yazıları", "Usta'ya Saygı", "Akademik"] as const).map((tab) => (
+{(["Tümü", "Duyuru", "Bülten", "Basın & Etkinlik"] as const).map((tab) => (
   <button
     key={tab}
     type="button"
@@ -599,8 +677,8 @@ export default function HomePage() {
   ) : filteredNews.length === 0 ? (
     <div className="col-span-full bg-surface-container-lowest p-8 rounded-xl text-center border border-dashed border-slate-200">
       <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">article</span>
-      <h4 className="font-headline-sm font-bold text-primary mb-1">Bu kategoride henüz yayınlanmış içerik bulunmuyor</h4>
-      <p className="text-sm text-slate-500 mb-4">Tüm yayınları görüntüleyebilir veya aylık bültenimize abone olabilirsiniz.</p>
+      <h4 className="font-headline-sm font-bold text-primary mb-1">Bu kategoride henüz yayınlanmış haber bulunmuyor</h4>
+      <p className="text-sm text-slate-500 mb-4">Tüm duyuruları görüntüleyebilir veya aylık bültenimize abone olabilirsiniz.</p>
       <div className="flex flex-wrap items-center justify-center gap-2">
         {activeFilter !== "Tümü" && (
           <button
@@ -608,11 +686,11 @@ export default function HomePage() {
             onClick={() => setActiveFilter("Tümü")}
             className="inline-flex items-center gap-1 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary-container transition-colors cursor-pointer"
           >
-            Tüm Yayınları Göster
+            Tüm Haberleri Göster
           </button>
         )}
-        <Link href="/yayinlar#abonelik" className="inline-flex items-center gap-1 px-4 py-2 bg-surface-ice text-primary text-xs font-semibold rounded-lg hover:bg-surface-container-high transition-colors">
-          Bültene Abone Ol
+        <Link href="/haberler" className="inline-flex items-center gap-1 px-4 py-2 bg-surface-ice text-primary text-xs font-semibold rounded-lg hover:bg-surface-container-high transition-colors">
+          Haberler Arşivine Git
         </Link>
       </div>
     </div>
@@ -627,7 +705,7 @@ export default function HomePage() {
               src={item.image_url}
             />
             <span className="absolute top-3 left-3 bg-primary text-on-primary font-caption-caps text-caption-caps px-2.5 py-1 rounded shadow-sm">
-              {item.category || (getArticleBucket(item.category) === "akademik" ? "Akademik" : getArticleBucket(item.category) === "usta_saygi" ? "Usta'ya Saygı" : "Köşe Yazısı")}
+              {item.category || "Duyuru"}
             </span>
             <span className="absolute bottom-3 right-3 bg-inverse-surface/80 text-inverse-on-surface font-caption-caps text-caption-caps px-2.5 py-1 rounded backdrop-blur-sm">
               {item.published_at || ""}
@@ -636,7 +714,15 @@ export default function HomePage() {
         )}
         <div className="p-space-lg flex flex-col flex-1 justify-between">
           <div>
-            <Link href={`/yayinlar/${item.slug}`}>
+            {!item.image_url && (
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="bg-surface-ice text-primary font-caption-caps text-caption-caps px-2.5 py-0.5 rounded font-bold">
+                  {item.category || "Duyuru"}
+                </span>
+                <span className="text-xs text-slate-muted">{item.published_at || ""}</span>
+              </div>
+            )}
+            <Link href={`/haberler/${item.slug || item.id}`}>
               <h3 className="font-headline-sm text-headline-sm text-on-surface font-bold leading-snug group-hover:text-primary transition-colors mb-space-xs">
                 {item.title}
               </h3>
@@ -646,8 +732,10 @@ export default function HomePage() {
             </p>
           </div>
           <div className="pt-space-md mt-space-md flex items-center justify-between">
-            <span className="font-caption-caps text-caption-caps text-slate-muted">{item.author_name}</span>
-            <Link className="inline-flex items-center gap-1 font-label-sm text-label-sm text-primary font-bold group-hover:underline" href={`/yayinlar/${item.slug}`}>
+            <span className="font-caption-caps text-caption-caps text-slate-muted">
+              {item.is_member_only ? "Üyelere Özel" : "AHİD Basın Odası"}
+            </span>
+            <Link className="inline-flex items-center gap-1 font-label-sm text-label-sm text-primary font-bold group-hover:underline" href={`/haberler/${item.slug || item.id}`}>
               <span>Devamını Oku</span>
               <span className="material-symbols-outlined text-sm">arrow_forward</span>
             </Link>
@@ -839,7 +927,7 @@ export default function HomePage() {
 <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-2xl">
 <div>
 <span className="font-caption-caps text-caption-caps text-gold-deep uppercase tracking-wider font-bold block mb-1">Fikri Birikim &amp; Hafıza</span>
-<h2 className="font-headline-xl text-headline-xl text-primary font-bold tracking-tight">Editoryal: "Usta'ya Saygı" Köşe Yazıları</h2>
+<h2 className="font-headline-xl text-headline-xl text-primary font-bold tracking-tight">Editoryal: &quot;Usta&apos;ya Saygı&quot; Köşe Yazıları</h2>
 <p className="font-body-sm text-body-sm text-slate-muted mt-1">Türk halkla ilişkiler tarihine yön veren akademisyenlerin ve duayen ustaların kaleminden makaleler.</p>
 </div>
 <Link className="inline-flex items-center gap-1 font-label-md text-label-md text-secondary hover:text-primary font-bold transition-colors" href="/yayinlar">
@@ -881,7 +969,17 @@ export default function HomePage() {
         {/*  Author Info Row  */}
         <div className="flex items-center justify-between pt-space-md">
           <div className="flex items-center gap-space-sm">
-            <img className="w-12 h-12 rounded-full object-cover shadow-sm" alt={featuredArticle.author_name} src={featuredArticle.image_url || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400"} />
+            {featuredArticle.author_avatar || featuredArticle.image_url ? (
+              <img
+                className="w-12 h-12 rounded-full object-cover shadow-sm"
+                alt={featuredArticle.author_name}
+                src={featuredArticle.author_avatar || featuredArticle.image_url || ""}
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm shadow-sm">
+                {getInitials(featuredArticle.author_name)}
+              </div>
+            )}
             <div>
               <span className="block font-label-md text-label-md font-bold text-on-surface">{featuredArticle.author_name}</span>
               <span className="block font-caption-caps text-caption-caps text-slate-muted">{featuredArticle.author_title || "AHİD Yayın Kurulu"}</span>
@@ -908,7 +1006,17 @@ export default function HomePage() {
         ) : (
           masterTributes.map((tribute, idx) => (
             <div key={tribute.id || idx} className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm hover:shadow transition-all flex items-start gap-space-md">
-              <img className="w-16 h-16 rounded object-cover shadow-sm" alt={tribute.title} src={tribute.image_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300"} />
+              {tribute.image_url || tribute.author_avatar ? (
+                <img
+                  className="w-16 h-16 rounded object-cover shadow-sm shrink-0"
+                  alt={tribute.title}
+                  src={tribute.image_url || tribute.author_avatar || ""}
+                />
+              ) : (
+                <div className="w-16 h-16 rounded bg-surface-ice text-primary flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                  {getInitials(tribute.author_name || tribute.title)}
+                </div>
+              )}
               <div className="flex flex-col flex-1">
                 <div className="flex items-center justify-between">
                   <h5 className="font-label-md text-label-md font-bold text-on-surface">{tribute.title}</h5>
@@ -950,25 +1058,25 @@ export default function HomePage() {
             Ankara’nın En Güçlü İletişim Network’ünde Yerinizi Alın
           </h2>
 <p className="font-body-lg text-body-lg text-secondary-fixed leading-relaxed mb-space-lg max-w-2xl">
-            AHİD üyeliği; yalnızca bir dernek kaydı değil, Türkiye'nin karar alıcı başkentinde mesleki itibarınızı belgeleyen resmi bir akreditasyondur.
+            AHİD üyeliği; yalnızca bir dernek kaydı değil, Türkiye&apos;nin karar alıcı başkentinde mesleki itibarınızı temsil eden güçlü bir meslek dayanışma ağıdır.
           </p>
 {/*  Membership Value List  */}
 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-space-xs gap-x-space-md font-body-sm text-body-sm text-on-primary mb-space-xl">
 <div className="flex items-center gap-2">
 <span className="material-symbols-outlined text-gold-light text-base">check_circle</span>
-<span>Sektörel eğitimlere ve zirvelere ücretsiz/öncelikli katılım</span>
+<span>Sektörel eğitimlere ve zirvelere üye kontenjanıyla katılım</span>
 </div>
 <div className="flex items-center gap-2">
 <span className="material-symbols-outlined text-gold-light text-base">check_circle</span>
-<span>AHİD Akreditasyon ve Mesleki Sertifika Programı</span>
+<span>Dijital üye kimlik kartı ve üye portalı erişimi</span>
 </div>
 <div className="flex items-center gap-2">
 <span className="material-symbols-outlined text-gold-light text-base">check_circle</span>
-<span>Ankara PR Profesyonelleri Dizini'nde yer alma hakkı</span>
+<span>AHİD çalışma komisyonlarında aktif görev alma hakkı</span>
 </div>
 <div className="flex items-center gap-2">
 <span className="material-symbols-outlined text-gold-light text-base">check_circle</span>
-<span>Hakemli yayınlarda ve panellerde konuşmacı/yazar temsiliyeti</span>
+<span>Yayınlarda ve panellerde konuşmacı/yazar temsiliyeti</span>
 </div>
 </div>
 {/*  Buttons  */}
@@ -1139,33 +1247,35 @@ export default function HomePage() {
 </button>
 </form>
 </div>
-{/*  Right: Map Representation & Office Atmosphere  */}
+{/*  Right: OpenStreetMap & Office Atmosphere  */}
 <div className="lg:col-span-6 flex flex-col gap-space-md">
-{/*  Static Location Pipeline Box  */}
-<div className="relative w-full h-80 rounded-xl overflow-hidden shadow-md bg-primary-container">
-<img
-  alt="Ankara Anıttepe kurumsal genel merkez çevresi"
-  className="w-full h-full object-cover opacity-85"
-  src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=900&q=80"
+<div className="relative w-full h-80 rounded-xl overflow-hidden shadow-md bg-surface-container border border-slate-200">
+<iframe
+  title="AHİD Genel Merkez Haritası - Çankaya, Ankara"
+  className="w-full h-full border-0"
+  loading="lazy"
+  src="https://www.openstreetmap.org/export/embed.html?bbox=32.832%2C39.920%2C32.852%2C39.936&layer=mapnik&marker=39.9285%2C32.8415"
 />
-<div className="absolute bottom-4 left-4 right-4 bg-surface-container-lowest/90 backdrop-blur-md p-space-md rounded-lg shadow-lg flex items-center justify-between">
+<div className="absolute bottom-3 left-3 right-3 bg-surface-container-lowest/95 backdrop-blur-md p-3.5 rounded-lg shadow-lg flex items-center justify-between">
 <div>
 <span className="font-caption-caps text-caption-caps uppercase text-gold-deep font-bold block">Başkent Koordinasyonu</span>
-<span className="font-label-md text-label-md font-bold text-primary">Anıttepe / Tandoğan Yerleşkesi</span>
+<span className="font-label-md text-label-md font-bold text-primary">Çankaya / Ankara Genel Merkez</span>
 </div>
-<a className="inline-flex items-center gap-1 text-primary hover:text-secondary font-label-sm text-label-sm font-semibold" href="https://www.google.com/maps/search/?api=1&query=39.9285,32.8415" rel="noopener noreferrer" target="_blank">
-<span>Yol Tarifi Al</span>
-<span className="material-symbols-outlined text-sm">directions</span>
+<a className="inline-flex items-center gap-1 text-primary hover:text-secondary font-label-sm text-label-sm font-semibold" href="https://www.openstreetmap.org/?mlat=39.9285&mlon=32.8415#map=16/39.9285/32.8415" rel="noopener noreferrer" target="_blank">
+<span>Haritada Aç</span>
+<span className="material-symbols-outlined text-sm">open_in_new</span>
 </a>
 </div>
 </div>
 {/*  Headquarters Atmosphere Card  */}
 <div className="bg-surface-ice rounded-xl p-space-lg flex items-center gap-space-md shadow-sm">
-<img className="w-24 h-24 rounded object-cover shadow-sm shrink-0" alt="AHİD Genel Merkez toplantı salonu" src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80" />
+<div className="w-20 h-20 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm">
+<span className="material-symbols-outlined text-4xl">account_balance</span>
+</div>
 <div>
 <h4 className="font-headline-sm text-headline-sm font-bold text-primary mb-1">Kurumsal Ziyaret Protokolü</h4>
 <p className="font-body-sm text-body-sm text-slate-dark leading-relaxed">
-                Dernek genel merkezimizde akademik heyetler, yabancı delegasyonlar ve medya temsilcileri için randevu bazlı toplantı salonlarımız tahsis edilmektedir.
+                Dernek genel merkezimizde akademik heyetler, kurumsal temsilciler ve medya mensupları için randevu bazlı görüşme ve toplantı imkânı sağlanmaktadır.
               </p>
 </div>
 </div>

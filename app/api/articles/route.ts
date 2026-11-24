@@ -1,233 +1,283 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { parsePositiveId, slugifyTurkish } from "@/lib/constants";
+import { recordAuditLog } from "@/lib/audit";
+import { supabaseServer } from "@/lib/supabase-server";
+import type { TablesUpdate } from "@/types/database.types";
 
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const category = searchParams.get("category");
-    const slug = searchParams.get("slug");
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const slug = searchParams.get("slug");
+  const idParam = parsePositiveId(searchParams.get("id"));
+  const category = searchParams.get("category");
+  const limitParam = Number(searchParams.get("limit") || "0");
+  const increment = searchParams.get("increment") === "true";
 
-    if (slug) {
-      const { data: article, error } = await supabase
-        .from("articles")
-        .select("*, board_members(id, full_name, title, photo_url, organization, bio)")
-        .eq("slug", slug)
-        .maybeSingle();
+  if (slug || idParam) {
+    let q = supabaseServer.from("articles").select("*");
+    q = slug ? q.eq("slug", slug) : q.eq("id", idParam as number);
 
-      if (error || !article) {
-        return NextResponse.json(
-          { success: false, error: "Makale bulunamadı.", article: null },
-          { status: 404 }
-        );
-      }
+    const { data: article, error } = await q.maybeSingle();
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    if (!article) {
+      return NextResponse.json(
+        { error: "Yayın veya köşe yazısı bulunamadı." },
+        { status: 404 }
+      );
+    }
 
-      // Increment view count asynchronously
+    if (increment) {
       const nextViews = (article.views_count || 0) + 1;
-      await supabase
+      await supabaseServer
         .from("articles")
         .update({ views_count: nextViews })
         .eq("id", article.id);
-
-      return NextResponse.json({
-        success: true,
-        article: { ...article, views_count: nextViews },
-      });
+      article.views_count = nextViews;
     }
 
-    let query = supabase
-      .from("articles")
-      .select("*, board_members(id, full_name, title, photo_url, organization)")
-      .order("id", { ascending: false });
-
-    if (category && category !== "Tümü") {
-      query = query.eq("category", category);
-    }
-
-    const { data, error } = await query;
-    if (error) {
-      return NextResponse.json(
-        { success: false, error: error.message, articles: [] },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      articles: data || [],
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message, articles: [] },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, article, data: article });
   }
+
+  let query = supabaseServer
+    .from("articles")
+    .select("*")
+    .order("published_at", { ascending: false });
+
+  if (category && category !== "all") {
+    query = query.eq("category", category);
+  }
+  if (Number.isFinite(limitParam) && limitParam > 0) {
+    query = query.limit(limitParam);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    success: true,
+    articles: data || [],
+    data: data || [],
+  });
 }
 
-export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req);
+export async function POST(request: Request) {
+  const auth = await requireAdmin(request);
   if ("response" in auth) return auth.response;
 
   try {
-    const body = await req.json();
-    const {
-      title,
-      category,
-      author_name,
-      author_title,
-      author_avatar,
-      board_member_id,
-      read_time,
-      summary,
-      content,
-      image_url,
-    } = body;
-
-    if (!title || !author_name) {
-      return NextResponse.json(
-        { success: false, error: "Makale başlığı ve yazar adı zorunludur." },
-        { status: 400 }
-      );
-    }
-
-    const slug =
-      title
-        .toLowerCase()
-        .replace(/ğ/g, "g")
-        .replace(/ü/g, "u")
-        .replace(/ş/g, "s")
-        .replace(/ı/g, "i")
-        .replace(/ö/g, "o")
-        .replace(/ç/g, "c")
-        .replace(/[^a-z0-9\s-]/g, "")
-        .trim()
-        .replace(/\s+/g, "-") +
-      "-" +
-      Date.now().toString().slice(-4);
-
-    const payload = {
-      title,
-      slug,
-      category: category || "Makaleler",
-      author_name,
-      author_title: author_title || "İletişim Uzmanı",
-      author_avatar: author_avatar || "",
-      board_member_id: board_member_id ? Number(board_member_id) : null,
-      read_time: read_time || "5 dk okuma",
-      summary: summary || "",
-      content: content || summary || "",
-      image_url: image_url || "",
-      published_at: new Date().toLocaleDateString("tr-TR", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
-      views_count: 1,
+    const body = (await request.json()) as {
+      title?: string;
+      slug?: string;
+      author_name?: string;
+      author_title?: string | null;
+      author_avatar?: string | null;
+      board_member_id?: number | string | null;
+      category?: string;
+      summary?: string | null;
+      content?: string | null;
+      read_time?: string | null;
+      published_at?: string | null;
+      image_url?: string | null;
     };
 
-    const { data, error } = await supabase
-      .from("articles")
-      .insert(payload)
-      .select("*")
-      .single();
-    if (error) {
+    if (!body.title?.trim() || !body.author_name?.trim()) {
       return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      article: data,
-      slug,
-      message: "Makale / yayın başarıyla kaydedildi.",
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(req: NextRequest) {
-  const auth = await requireAdmin(req);
-  if ("response" in auth) return auth.response;
-
-  try {
-    const body = await req.json();
-    const { id, ...updates } = body;
-
-    if (!id) {
-      return NextResponse.json(
-        { success: false, error: "Makale ID zorunludur." },
+        { error: "Başlık ve yazar adı zorunludur." },
         { status: 400 }
       );
     }
 
-    const { data, error } = await supabase
+    const baseSlug = slugifyTurkish(body.slug || body.title);
+    const uniqueSlug = `${baseSlug || "yazi"}-${Date.now()
+      .toString(36)
+      .slice(-4)}`;
+
+    const boardMemberId = parsePositiveId(body.board_member_id);
+    let authorAvatar = body.author_avatar?.trim() || null;
+    if (!authorAvatar && boardMemberId) {
+      const { data: bm } = await supabaseServer
+        .from("board_members")
+        .select("photo_url")
+        .eq("id", boardMemberId)
+        .maybeSingle();
+      if (bm?.photo_url) authorAvatar = bm.photo_url;
+    }
+
+    const wordCount = (body.content || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+    const computedReadTime =
+      body.read_time?.trim() ||
+      `${Math.max(1, Math.ceil(wordCount / 180))} dk okuma`;
+
+    const { data, error } = await supabaseServer
       .from("articles")
-      .update(updates)
-      .eq("id", Number(id))
-      .select("*")
+      .insert({
+        title: body.title.trim(),
+        slug: uniqueSlug,
+        author_name: body.author_name.trim(),
+        author_title: body.author_title?.trim() || "Kurul Üyesi / Yazar",
+        author_avatar: authorAvatar,
+        board_member_id: boardMemberId,
+        author_id: auth.user.id,
+        category: (body.category || "Görüş").trim(),
+        summary: body.summary?.trim() || null,
+        content: body.content?.trim() || null,
+        read_time: computedReadTime,
+        published_at:
+          body.published_at || new Date().toISOString().split("T")[0],
+        image_url: body.image_url?.trim() || null,
+        views_count: 0,
+      })
+      .select()
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({
-      success: true,
-      article: data,
-      message: "Makale başarıyla güncellendi.",
+    await recordAuditLog({
+      actorUserId: auth.user.id,
+      actorEmail: auth.user.email,
+      actorRole: auth.user.role,
+      action: "ARTICLE_CREATED",
+      target: data.title,
+      details: `Köşe yazısı/yayın eklendi (Yazar: ${data.author_name})`,
+      status: "success",
     });
-  } catch (error: any) {
+
     return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
+      { success: true, article: data, data },
+      { status: 201 }
+    );
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Geçersiz istek." },
+      { status: 400 }
     );
   }
 }
 
-export async function DELETE(req: NextRequest) {
-  const auth = await requireAdmin(req);
+export async function PATCH(request: Request) {
+  const auth = await requireAdmin(request);
   if ("response" in auth) return auth.response;
 
   try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+    const body = (await request.json()) as {
+      id?: number | string;
+      title?: string;
+      slug?: string;
+      author_name?: string;
+      author_title?: string | null;
+      author_avatar?: string | null;
+      board_member_id?: number | string | null;
+      category?: string;
+      summary?: string | null;
+      content?: string | null;
+      read_time?: string | null;
+      published_at?: string | null;
+      image_url?: string | null;
+    };
 
-    if (!id) {
+    const articleId = parsePositiveId(body.id);
+    if (!articleId) {
       return NextResponse.json(
-        { success: false, error: "Makale ID zorunludur." },
+        { error: "Geçerli yayın ID zorunludur." },
         { status: 400 }
       );
     }
 
-    const { error } = await supabase
+    const updatePayload: TablesUpdate<"articles"> = {};
+    if (body.title !== undefined) updatePayload.title = body.title.trim();
+    if (body.slug !== undefined) updatePayload.slug = slugifyTurkish(body.slug);
+    if (body.author_name !== undefined) {
+      updatePayload.author_name = body.author_name.trim();
+    }
+    if (body.author_title !== undefined) {
+      updatePayload.author_title = body.author_title;
+    }
+    if (body.author_avatar !== undefined) {
+      updatePayload.author_avatar = body.author_avatar;
+    }
+    if (body.board_member_id !== undefined) {
+      updatePayload.board_member_id = parsePositiveId(body.board_member_id);
+    }
+    if (body.category !== undefined) {
+      updatePayload.category = body.category.trim();
+    }
+    if (body.summary !== undefined) updatePayload.summary = body.summary;
+    if (body.content !== undefined) updatePayload.content = body.content;
+    if (body.read_time !== undefined) updatePayload.read_time = body.read_time;
+    if (body.published_at !== undefined) {
+      updatePayload.published_at = body.published_at;
+    }
+    if (body.image_url !== undefined) updatePayload.image_url = body.image_url;
+
+    const { data, error } = await supabaseServer
       .from("articles")
-      .delete()
-      .eq("id", Number(id));
+      .update(updatePayload)
+      .eq("id", articleId)
+      .select()
+      .single();
 
     if (error) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Makale başarıyla silindi.",
+    await recordAuditLog({
+      actorUserId: auth.user.id,
+      actorEmail: auth.user.email,
+      actorRole: auth.user.role,
+      action: "ARTICLE_UPDATED",
+      target: data.title,
+      details: "Yayın/köşe yazısı güncellendi.",
+      status: "success",
     });
-  } catch (error: any) {
+
+    return NextResponse.json({ success: true, article: data, data });
+  } catch (err: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : "Geçersiz istek." },
+      { status: 400 }
     );
   }
+}
+
+export async function DELETE(request: Request) {
+  const auth = await requireAdmin(request);
+  if ("response" in auth) return auth.response;
+
+  const { searchParams } = new URL(request.url);
+  const articleId = parsePositiveId(searchParams.get("id"));
+  if (!articleId) {
+    return NextResponse.json(
+      { error: "Geçerli yayın ID zorunludur." },
+      { status: 400 }
+    );
+  }
+
+  const { error } = await supabaseServer
+    .from("articles")
+    .delete()
+    .eq("id", articleId);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  await recordAuditLog({
+    actorUserId: auth.user.id,
+    actorEmail: auth.user.email,
+    actorRole: auth.user.role,
+    action: "ARTICLE_DELETED",
+    target: String(articleId),
+    details: "Köşe yazısı/yayın silindi.",
+    status: "warning",
+  });
+
+  return NextResponse.json({ success: true });
 }

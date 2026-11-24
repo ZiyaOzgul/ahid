@@ -159,7 +159,7 @@ export default function HaberlerPage() {
                     <span className="material-symbols-outlined text-xs text-[#002869]">
                       verified
                     </span>
-                    DERBİS Senkronize
+                    Resmi Arşiv Senkronize
                   </span>
                 </div>
               </div>
@@ -505,10 +505,16 @@ export default function HaberlerPage() {
                               </span>
                             </div>
                           )}
-                          <div className="absolute top-4 left-4">
+                          <div className="absolute top-4 left-4 flex flex-wrap gap-1.5">
                             <span className="bg-[#ebf2fc] text-[#002869] text-[11px] px-3 py-1 rounded-full uppercase tracking-wider font-bold">
                               {item.category}
                             </span>
+                            {item.is_member_only && (
+                              <span className="bg-[#9b4900] text-white text-[11px] px-2.5 py-1 rounded-full uppercase tracking-wider font-bold inline-flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[13px]">lock</span>
+                                Üyelere Özel
+                              </span>
+                            )}
                           </div>
                           {item.bulletin_no && (
                             <div className="absolute bottom-3 right-3 bg-[#253144]/80 backdrop-blur-xs text-white text-[11px] font-bold px-2.5 py-1 rounded">
@@ -577,7 +583,7 @@ export default function HaberlerPage() {
                       Kurumsal Basın ve Arşiv Koordinasyonu
                     </span>
                     <span className="hidden sm:inline-block px-2.5 py-0.5 rounded text-[11px] bg-[#fde68a] text-[#92400e] font-bold uppercase">
-                      DERBİS &amp; Basın Masası
+                      AHİD Basın Masası
                     </span>
                   </div>
                   <p className="text-sm text-[#334155] mt-1">

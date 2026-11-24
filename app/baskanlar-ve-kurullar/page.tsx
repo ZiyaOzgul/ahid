@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { normalizeBoardCategory } from "@/lib/constants";
 
 interface BoardMember {
   id: number;
@@ -80,39 +81,53 @@ export default function BaskanlarVeKurullarPage() {
     }
   };
 
-  // Filter members by tab categories
-  const presidents = members.filter(
-    (m) =>
-      m.category === "past_president" ||
-      m.category === "president" ||
-      m.category === "baskanlar" ||
-      m.is_founding_president
-  );
+  // Filter members by normalized tab categories
+  const presidents = members.filter((m) => {
+    const raw = (m.category || "").toLowerCase();
+    const norm = normalizeBoardCategory(m.category);
+    return (
+      norm === "donem_baskani" ||
+      norm === "gecmis_baskan" ||
+      raw === "past_president" ||
+      raw === "president" ||
+      raw === "baskanlar" ||
+      Boolean(m.is_founding_president)
+    );
+  });
   const foundingPresident =
     presidents.find((m) => m.is_founding_president) || null;
   const termPresidents = foundingPresident
     ? presidents.filter((m) => m.id !== foundingPresident.id)
     : presidents;
 
-  const advisoryMembers = members.filter(
-    (m) =>
-      m.category === "advisory" ||
-      m.category === "danisma_kurulu" ||
-      m.category === "yuksek_istisare"
-  );
-  const supervisoryMembers = members.filter(
-    (m) =>
-      m.category === "supervisory" ||
-      m.category === "denetim_kurulu" ||
-      m.category === "audit" ||
-      m.category === "etik_kurulu"
-  );
-  const honorMembers = members.filter(
-    (m) => m.category === "honor" || m.category === "onur_kurulu"
-  );
-  const youthMembers = members.filter(
-    (m) => m.category === "youth" || m.category === "genc_konsey"
-  );
+  const advisoryMembers = members.filter((m) => {
+    const raw = (m.category || "").toLowerCase();
+    return (
+      normalizeBoardCategory(m.category) === "yuksek_danisma" ||
+      raw === "advisory"
+    );
+  });
+  const supervisoryMembers = members.filter((m) => {
+    const raw = (m.category || "").toLowerCase();
+    return (
+      normalizeBoardCategory(m.category) === "denetim_kurulu" ||
+      raw === "supervisory" ||
+      raw === "audit" ||
+      raw === "etik_kurulu"
+    );
+  });
+  const honorMembers = members.filter((m) => {
+    const raw = (m.category || "").toLowerCase();
+    return (
+      raw === "honor" ||
+      raw === "onur_kurulu" ||
+      normalizeBoardCategory(m.category) === "yonetim_kurulu"
+    );
+  });
+  const youthMembers = members.filter((m) => {
+    const raw = (m.category || "").toLowerCase();
+    return raw === "youth" || raw === "genc_konsey";
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9ff] text-[#101c2e]">
@@ -256,17 +271,17 @@ export default function BaskanlarVeKurullarPage() {
               <div className="bg-white p-4 rounded-xl shadow-xs border border-[#e7eeff] flex flex-col">
                 <div className="flex items-center justify-between text-[#225aba]">
                   <span className="font-['Plus_Jakarta_Sans'] text-3xl text-[#225aba] font-bold">
-                    %100
+                    {members.length}
                   </span>
                   <span className="material-symbols-outlined text-2xl text-[#225aba]">
                     account_balance
                   </span>
                 </div>
                 <span className="text-sm text-[#101c2e] font-semibold mt-1">
-                  DERBİS Akreditasyon
+                  Kurul Üyesi &amp; Başkan
                 </span>
                 <span className="text-[11px] font-bold text-[#64748b] uppercase">
-                  Resmi Sicil Uyumlu
+                  Canlı Arşiv Kaydı
                 </span>
               </div>
             </div>

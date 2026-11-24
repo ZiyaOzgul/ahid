@@ -7,16 +7,32 @@ import Link from "next/link";
 
 const DRAFT_STORAGE_KEY = "ahid_uyelik_draft";
 
+const COMMITTEE_OPTIONS = [
+  "Kamu Diplomasisi ve Şeffaflık",
+  "Yapay Zekâ ve Dijital Dönüşüm",
+  "Mesleki Etik ve Hukuk Kurulu",
+  "Gençlik ve Mentorluk Ağı",
+  "Akademik Hakemli Yayınlar",
+  "Sürdürülebilirlik & KSS",
+];
+
 export default function UyelikPage() {
   const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(1);
   const [selectedTier, setSelectedTier] = useState("asil");
+  const [selectedCommittees, setSelectedCommittees] = useState<string[]>([]);
+  const [interviewOpt, setInterviewOpt] = useState(false);
+  const [consentDeontology, setConsentDeontology] = useState(false);
+  const [consentKvkk, setConsentKvkk] = useState(false);
+  const [consentTruth, setConsentTruth] = useState(false);
+  const [membershipOpen, setMembershipOpen] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [appNo, setAppNo] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cvUrl, setCvUrl] = useState<string>("");
   const [cvName, setCvName] = useState<string>("");
   const [uploadingCv, setUploadingCv] = useState(false);
+  const [isDraggingCv, setIsDraggingCv] = useState(false);
   const [cvError, setCvError] = useState("");
   const [stepError, setStepError] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -24,38 +40,66 @@ export default function UyelikPage() {
   const [openFaqs, setOpenFaqs] = useState<{ [key: number]: boolean }>({ 1: true });
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (!raw || !formRef.current) return;
-      const draft = JSON.parse(raw) as {
-        selectedTier?: string;
-        cvUrl?: string;
-        cvName?: string;
-        fields?: Record<string, string>;
-        interview_opt?: boolean;
-      };
-      if (draft.selectedTier) setSelectedTier(draft.selectedTier);
-      if (draft.cvUrl) setCvUrl(draft.cvUrl);
-      if (draft.cvName) setCvName(draft.cvName);
-      if (draft.fields) {
-        Object.entries(draft.fields).forEach(([name, value]) => {
-          const el = formRef.current?.elements.namedItem(name) as
-            | HTMLInputElement
-            | HTMLSelectElement
-            | null;
-          if (el && typeof value === "string") {
-            el.value = value;
-          }
-        });
+    let active = true;
+    fetch("/api/cms?page=uyelik")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { settings?: { membership_open?: boolean } } | null) => {
+        if (!active || !data?.settings) return;
+        if (typeof data.settings.membership_open === "boolean") {
+          setMembershipOpen(data.settings.membership_open);
+        }
+      })
+      .catch(() => {});
+
+    const restoreTimer = window.setTimeout(() => {
+      if (!active) return;
+      try {
+        const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+        if (!raw || !formRef.current) return;
+        const draft = JSON.parse(raw) as {
+          selectedTier?: string;
+          selectedCommittees?: string[];
+          cvUrl?: string;
+          cvName?: string;
+          fields?: Record<string, string>;
+          interview_opt?: boolean;
+        };
+        if (draft.selectedTier) setSelectedTier(draft.selectedTier);
+        if (Array.isArray(draft.selectedCommittees)) {
+          setSelectedCommittees(draft.selectedCommittees);
+        }
+        if (draft.cvUrl) setCvUrl(draft.cvUrl);
+        if (draft.cvName) setCvName(draft.cvName);
+        if (typeof draft.interview_opt === "boolean") {
+          setInterviewOpt(draft.interview_opt);
+        }
+        if (draft.fields) {
+          Object.entries(draft.fields).forEach(([name, value]) => {
+            const el = formRef.current?.elements.namedItem(name) as
+              | HTMLInputElement
+              | HTMLSelectElement
+              | null;
+            if (el && typeof value === "string") {
+              el.value = value;
+            }
+          });
+        }
+      } catch {
+        // Ignore malformed local draft
       }
-      const interviewCheckbox = formRef.current.querySelector("#interview_opt") as HTMLInputElement | null;
-      if (interviewCheckbox && typeof draft.interview_opt === "boolean") {
-        interviewCheckbox.checked = draft.interview_opt;
-      }
-    } catch {
-      // Ignore malformed local draft
-    }
+    }, 0);
+
+    return () => {
+      active = false;
+      window.clearTimeout(restoreTimer);
+    };
   }, []);
+
+  const toggleCommittee = (name: string) => {
+    setSelectedCommittees((prev) =>
+      prev.includes(name) ? prev.filter((c) => c !== name) : [...prev, name]
+    );
+  };
 
   const validateStep = (stepNumber: number): boolean => {
     const panel = document.getElementById(`step-panel-${stepNumber}`);
@@ -79,6 +123,10 @@ export default function UyelikPage() {
         field.focus();
         return false;
       }
+    }
+    if (stepNumber === 2 && selectedCommittees.length === 0) {
+      setStepError("Lütfen görev almak istediğiniz en az 1 çalışma komisyonu seçiniz.");
+      return false;
     }
     return true;
   };
@@ -106,15 +154,15 @@ export default function UyelikPage() {
         fields[key] = value;
       }
     });
-    const interviewCheckbox = formRef.current.querySelector("#interview_opt") as HTMLInputElement | null;
     try {
       localStorage.setItem(
         DRAFT_STORAGE_KEY,
         JSON.stringify({
           selectedTier,
+          selectedCommittees,
           cvUrl,
           cvName,
-          interview_opt: Boolean(interviewCheckbox?.checked),
+          interview_opt: interviewOpt,
           fields,
         })
       );
@@ -125,28 +173,39 @@ export default function UyelikPage() {
     }
   };
 
-  const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadCvFile = async (file: File) => {
     setUploadingCv(true);
     setCvError("");
     try {
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("bucket", "cv-uploads");
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await fetch("/api/upload/cv", { method: "POST", body: fd });
       const data = await res.json();
       if (res.ok && data.success && data.url) {
         setCvUrl(data.url);
         setCvName(file.name);
       } else {
-        setCvError(data.error || "Dosya yüklenemedi. Lütfen PDF/DOCX formatında (maksimum 10MB) bir dosya seçiniz.");
+        setCvError(data.error || "Özgeçmiş yüklenemedi. Yalnızca geçerli PDF (maksimum 5MB) dosyaları kabul edilmektedir.");
       }
     } catch {
       setCvError("Dosya yükleme sunucusuna bağlanılamadı. Lütfen tekrar deneyin.");
     } finally {
       setUploadingCv(false);
     }
+  };
+
+  const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadCvFile(file);
+  };
+
+  const handleCvDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDraggingCv(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await uploadCvFile(file);
   };
 
   const selectTierAndScroll = (tier: string) => {
@@ -164,6 +223,10 @@ export default function UyelikPage() {
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!membershipOpen) {
+      setSubmitError("Yeni üyelik başvuruları yönetim kararıyla geçici olarak durdurulmuştur.");
+      return;
+    }
     setStepError("");
     setSubmitError("");
 
@@ -180,6 +243,25 @@ export default function UyelikPage() {
     const nameParts = fullName.split(" ").filter(Boolean);
     const firstName = nameParts.length > 1 ? nameParts.slice(0, -1).join(" ") : fullName || "Aday";
     const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "Üye";
+
+    const ref1 = [
+      ((formData.get("ref1_name") as string) || "").trim(),
+      ((formData.get("ref1_title") as string) || "").trim(),
+      ((formData.get("ref1_contact") as string) || "").trim(),
+    ]
+      .filter(Boolean)
+      .join(" — ");
+    const ref2 = [
+      ((formData.get("ref2_name") as string) || "").trim(),
+      ((formData.get("ref2_title") as string) || "").trim(),
+      ((formData.get("ref2_contact") as string) || "").trim(),
+    ]
+      .filter(Boolean)
+      .join(" — ");
+    const references: string[] = [];
+    if (ref1) references.push(ref1);
+    if (ref2) references.push(ref2);
+    if (interviewOpt) references.push("Sicil Kurulu çevrim içi/yüz yüze ön mülakat talebi");
 
     const payload = {
       tier: selectedTier || (formData.get("membership_tier") as string) || "asil",
@@ -198,6 +280,8 @@ export default function UyelikPage() {
       experience_years: ((formData.get("experience_years") as string) || "").trim(),
       linkedin_url: ((formData.get("linkedin_url") as string) || "").trim(),
       cv_url: cvUrl || null,
+      committees: selectedCommittees,
+      references,
     };
 
     try {
@@ -360,10 +444,10 @@ export default function UyelikPage() {
 <div className="mt-space-md pt-space-sm pb-space-sm bg-surface-container-low rounded-lg p-3">
 <div className="text-slate-muted font-caption-caps text-caption-caps">YILLIK AİDAT</div>
 <div className="flex items-baseline gap-1">
-<span className="font-headline-lg text-headline-lg font-extrabold text-primary">₺1.200</span>
+<span className="font-headline-lg text-headline-lg font-extrabold text-primary">₺2.400</span>
 <span className="font-body-sm text-body-sm text-slate-muted">/ yıl</span>
 </div>
-<div className="font-caption-caps text-caption-caps text-slate-dark mt-1">+₺500 Tek Seferlik Giriş Ödentisi</div>
+<div className="font-caption-caps text-caption-caps text-slate-dark mt-1">Yıllık Asıl Üye Aidatı (Onay Sonrası)</div>
 </div>
 <div className="mt-space-md space-y-space-sm font-body-sm text-body-sm text-slate-dark">
 <div className="flex items-start gap-2">
@@ -376,11 +460,11 @@ export default function UyelikPage() {
 </div>
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-primary text-base mt-0.5">check_circle</span>
-<span>VIP protokol ve diplomatik resepsiyon katılımı</span>
+<span>Etkinlik ve zirve kayıtlarında üye kontenjanı</span>
 </div>
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-primary text-base mt-0.5">check_circle</span>
-<span>Resmi AHİD Akreditasyon Rozeti &amp; Sertifikası</span>
+<span>QR Doğrulamalı Dijital Üye Kimlik Kartı</span>
 </div>
 </div>
 </div>
@@ -448,32 +532,32 @@ export default function UyelikPage() {
 <div className="mt-space-md pt-space-sm pb-space-sm bg-surface-container-low rounded-lg p-3">
 <div className="text-slate-muted font-caption-caps text-caption-caps">YILLIK KURUMSAL KATILIM</div>
 <div className="flex items-baseline gap-1">
-<span className="font-headline-lg text-headline-lg font-extrabold text-primary">₺12.000</span>
+<span className="font-headline-lg text-headline-lg font-extrabold text-primary">₺8.500</span>
 <span className="font-body-sm text-body-sm text-slate-muted">/ yıl</span>
 </div>
-<div className="font-caption-caps text-caption-caps text-slate-dark mt-1">5 Delegeye Kadar Dahil</div>
+<div className="font-caption-caps text-caption-caps text-slate-dark mt-1">Kurumsal / Onursal Temsil</div>
 </div>
 <div className="mt-space-md space-y-space-sm font-body-sm text-body-sm text-slate-dark">
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-gold-deep text-base mt-0.5">check_circle</span>
-<span>Kurum bünyesinden 5 yöneticiye tam üyelik</span>
+<span>Kurumsal çalışma gruplarında temsil hakkı</span>
 </div>
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-gold-deep text-base mt-0.5">check_circle</span>
-<span>İletişim Başarı Ödülleri'nde öncelikli kategori hakkı</span>
+<span>İletişim Başarı Ödülleri&apos;nde öncelikli kategori hakkı</span>
 </div>
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-gold-deep text-base mt-0.5">check_circle</span>
-<span>AHİD etkinliklerinde kurumsal logo ve marka temsili</span>
+<span>AHİD etkinliklerinde kurumsal protokol daveti</span>
 </div>
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-gold-deep text-base mt-0.5">check_circle</span>
-<span>İstihdam ve yetenek havuzuna doğrudan erişim</span>
+<span>Yayın ve çalıştay raporlarına tam erişim</span>
 </div>
 </div>
 </div>
 <div className="mt-space-lg pt-space-md">
-<button className="w-full py-2.5 px-4 rounded bg-surface-container text-primary hover:bg-surface-container-high font-label-md text-label-md transition-colors flex items-center justify-center gap-2" onClick={() => selectTierAndScroll("kurumsal")}>
+<button className="w-full py-2.5 px-4 rounded bg-surface-container text-primary hover:bg-surface-container-high font-label-md text-label-md transition-colors flex items-center justify-center gap-2" onClick={() => selectTierAndScroll("onursal")}>
 <span>Kurumsal Başvuru Yap</span>
 <span className="material-symbols-outlined text-sm">arrow_forward</span>
 </button>
@@ -492,27 +576,27 @@ export default function UyelikPage() {
 <div className="mt-space-md pt-space-sm pb-space-sm bg-surface-container-low rounded-lg p-3">
 <div className="text-slate-muted font-caption-caps text-caption-caps">YILLIK DESTEK AİDATI</div>
 <div className="flex items-baseline gap-1">
-<span className="font-headline-lg text-headline-lg font-extrabold text-primary">₺350</span>
+<span className="font-headline-lg text-headline-lg font-extrabold text-primary">₺600</span>
 <span className="font-body-sm text-body-sm text-slate-muted">/ yıl</span>
 </div>
-<div className="font-caption-caps text-caption-caps text-slate-dark mt-1">Sembolik Gençlik Fonu Katkısı</div>
+<div className="font-caption-caps text-caption-caps text-slate-dark mt-1">Genç Profesyonel / Aday Katkısı</div>
 </div>
 <div className="mt-space-md space-y-space-sm font-body-sm text-body-sm text-slate-dark">
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-primary text-base mt-0.5">check_circle</span>
-<span>Üst Düzey İletişim Direktörleri Mentorluk Programı</span>
+<span>İletişim profesyonelleriyle deneyim söyleşileri</span>
 </div>
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-primary text-base mt-0.5">check_circle</span>
-<span>Ankara PR Staj &amp; İstihdam Portalı erişimi</span>
+<span>Üye özel bilgi bankası ve yayın arşivi erişimi</span>
 </div>
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-primary text-base mt-0.5">check_circle</span>
-<span>Tüm sertifikalı atölye ve eğitimlere ücretsiz katılım</span>
+<span>Atölye ve seminerlerde öncelikli kontenjan</span>
 </div>
 <div className="flex items-start gap-2">
 <span className="material-symbols-outlined text-primary text-base mt-0.5">check_circle</span>
-<span>Genç AHİD Çalışma Grubu komite üyeliği</span>
+<span>Genç AHİD Çalışma Grubu komite katılımı</span>
 </div>
 </div>
 </div>
@@ -559,7 +643,7 @@ export default function UyelikPage() {
 <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary font-headline-sm text-headline-sm font-bold flex items-center justify-center mb-space-md">2</div>
 <h4 className="font-headline-sm text-headline-sm text-primary font-bold mb-space-xs">Sicil &amp; Referans Tetkiki</h4>
 <p className="font-body-sm text-body-sm text-slate-muted leading-relaxed">
-              Belirttiğiniz 2 asil üye referansı ile teyit sağlanır; mesleki etik ve deontoloji sicil uygunluğu Sicil Kurulu'nca taranır.
+              Belirttiğiniz 2 asil üye referansı ile teyit sağlanır; mesleki etik ve deontoloji sicil uygunluğu Sicil Kurulu&apos;nca taranır.
             </p>
 </div>
 <div className="pt-space-md mt-space-md border-t-0 text-caption-caps font-caption-caps text-slate-dark font-bold flex items-center gap-1">
@@ -587,7 +671,7 @@ export default function UyelikPage() {
 <div className="w-10 h-10 rounded-full bg-gold-deep text-on-primary font-headline-sm text-headline-sm font-bold flex items-center justify-center mb-space-md">4</div>
 <h4 className="font-headline-sm text-headline-sm text-primary font-bold mb-space-xs">Akreditasyon &amp; Üye Kartı</h4>
 <p className="font-body-sm text-body-sm text-slate-muted leading-relaxed">
-              Kabul tebligatınız e-posta ile iletilir. Dijital üye kimliğiniz aktive edilir, fiziki rozet ve beratınız Genel Merkez'de takdim edilir.
+              Kabul tebligatınız ve geçici portal giriş bilgileriniz e-posta veya yönetici bilgilendirmesi ile iletilir. Üye No&apos;nuz oluşturulur ve QR kodlu dijital AHİD üye kimliğiniz aktif olur.
             </p>
 </div>
 <div className="pt-space-md mt-space-md border-t-0 text-caption-caps font-caption-caps text-gold-deep font-bold flex items-center gap-1">
@@ -664,6 +748,12 @@ export default function UyelikPage() {
 <span>{submitError}</span>
 </div>
 )}
+{!membershipOpen && (
+<div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-sm font-semibold flex items-center gap-2">
+<span className="material-symbols-outlined text-base shrink-0">block</span>
+<span>Yeni üyelik başvuruları Yönetim Kurulu kararıyla geçici olarak durdurulmuştur. Mevcut üyelikleriniz için Üye Portalı&apos;nı kullanabilirsiniz.</span>
+</div>
+)}
 {draftNotice && (
 <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center gap-2">
 <span className="material-symbols-outlined text-base shrink-0">bookmark_added</span>
@@ -685,7 +775,7 @@ export default function UyelikPage() {
 <span className="material-symbols-outlined text-primary text-base">check_circle</span>
 </div>
 <span className="font-caption-caps text-caption-caps text-slate-muted">En az 3 yıl sektör deneyimi</span>
-<span className="font-label-sm text-label-sm text-primary font-bold mt-2">₺1.200 / yıl</span>
+<span className="font-label-sm text-label-sm text-primary font-bold mt-2">₺2.400 / yıl</span>
 <div className="absolute inset-0 rounded-lg pointer-events-none peer-checked:bg-primary/5"></div>
 </label>
 <label className={`relative flex flex-col p-space-md rounded-lg cursor-pointer hover:bg-surface-ice transition-all ${selectedTier === "akademik" ? "bg-surface-ice ring-2 ring-secondary/40" : "bg-surface-container-low"}`}>
@@ -695,17 +785,17 @@ export default function UyelikPage() {
 <span className="material-symbols-outlined text-secondary text-base">school</span>
 </div>
 <span className="font-caption-caps text-caption-caps text-slate-muted">Öğretim üyesi &amp; araştırmacı</span>
-<span className="font-label-sm text-label-sm text-secondary font-bold mt-2">₺800 / yıl</span>
+<span className="font-label-sm text-label-sm text-secondary font-bold mt-2">₺2.400 / yıl</span>
 <div className="absolute inset-0 rounded-lg pointer-events-none peer-checked:bg-primary/5"></div>
 </label>
-<label className={`relative flex flex-col p-space-md rounded-lg cursor-pointer hover:bg-surface-ice transition-all ${selectedTier === "kurumsal" ? "bg-surface-ice ring-2 ring-gold-deep/40" : "bg-surface-container-low"}`}>
-<input checked={selectedTier === "kurumsal"} onChange={() => setSelectedTier("kurumsal")} className="peer sr-only" name="membership_tier" type="radio" value="kurumsal" />
+<label className={`relative flex flex-col p-space-md rounded-lg cursor-pointer hover:bg-surface-ice transition-all ${selectedTier === "onursal" ? "bg-surface-ice ring-2 ring-gold-deep/40" : "bg-surface-container-low"}`}>
+<input checked={selectedTier === "onursal"} onChange={() => setSelectedTier("onursal")} className="peer sr-only" name="membership_tier" type="radio" value="onursal" />
 <div className="flex items-center justify-between mb-2">
-<span className="font-label-md text-label-md font-bold text-primary">Kurumsal</span>
+<span className="font-label-md text-label-md font-bold text-primary">Kurumsal / Onursal</span>
 <span className="material-symbols-outlined text-gold-deep text-base">corporate_fare</span>
 </div>
 <span className="font-caption-caps text-caption-caps text-slate-muted">Ajans ve kurum temsilciliği</span>
-<span className="font-label-sm text-label-sm text-gold-deep font-bold mt-2">₺12.000 / yıl</span>
+<span className="font-label-sm text-label-sm text-gold-deep font-bold mt-2">₺8.500 / yıl</span>
 <div className="absolute inset-0 rounded-lg pointer-events-none peer-checked:bg-primary/5"></div>
 </label>
 <label className={`relative flex flex-col p-space-md rounded-lg cursor-pointer hover:bg-surface-ice transition-all ${selectedTier === "genc" ? "bg-surface-ice ring-2 ring-primary/40" : "bg-surface-container-low"}`}>
@@ -715,7 +805,7 @@ export default function UyelikPage() {
 <span className="material-symbols-outlined text-slate-muted text-base">psychology</span>
 </div>
 <span className="font-caption-caps text-caption-caps text-slate-muted">Son sınıf veya 0-2 yıl yeni mezun</span>
-<span className="font-label-sm text-label-sm text-slate-dark font-bold mt-2">₺350 / yıl</span>
+<span className="font-label-sm text-label-sm text-slate-dark font-bold mt-2">₺600 / yıl</span>
 <div className="absolute inset-0 rounded-lg pointer-events-none peer-checked:bg-primary/5"></div>
 </label>
 </div>
@@ -734,7 +824,7 @@ export default function UyelikPage() {
 <input className="w-full px-4 py-2.5 rounded bg-surface-container-lowest text-on-surface font-body-md text-body-md shadow-sm outline-none focus:bg-surface-ice transition-all" name="email" placeholder="ad.soyad@kurum.gov.tr veya com.tr" required type="email" />
 </div>
 <div>
-<label className="block font-label-sm text-label-sm text-slate-dark mb-1">Cep Telefonu (SMS Bildirimleri İçin) *</label>
+<label className="block font-label-sm text-label-sm text-slate-dark mb-1">Cep Telefonu (Güncel İletişim İçin) *</label>
 <input className="w-full px-4 py-2.5 rounded bg-surface-container-lowest text-on-surface font-body-md text-body-md shadow-sm outline-none focus:bg-surface-ice transition-all" name="phone" placeholder="+90 (5XX) XXX XX XX" required type="tel" />
 </div>
 <div>
@@ -811,30 +901,27 @@ export default function UyelikPage() {
                 Görev Almak İstediğiniz AHİD İhtisas Çalışma Komisyonları (En az 1 komisyon seçiniz)
               </label>
 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-space-sm">
-<label className="flex items-center gap-2 p-2.5 rounded bg-surface-container-low cursor-pointer hover:bg-surface-ice">
-<input defaultChecked className="w-4 h-4 rounded text-primary" type="checkbox" />
-<span className="font-body-sm text-body-sm text-slate-dark">Kamu Diplomasisi ve Şeffaflık</span>
-</label>
-<label className="flex items-center gap-2 p-2.5 rounded bg-surface-container-low cursor-pointer hover:bg-surface-ice">
-<input defaultChecked className="w-4 h-4 rounded text-primary" type="checkbox" />
-<span className="font-body-sm text-body-sm text-slate-dark">Yapay Zekâ ve Dijital Dönüşüm</span>
-</label>
-<label className="flex items-center gap-2 p-2.5 rounded bg-surface-container-low cursor-pointer hover:bg-surface-ice">
-<input className="w-4 h-4 rounded text-primary" type="checkbox" />
-<span className="font-body-sm text-body-sm text-slate-dark">Mesleki Etik ve Hukuk Kurulu</span>
-</label>
-<label className="flex items-center gap-2 p-2.5 rounded bg-surface-container-low cursor-pointer hover:bg-surface-ice">
-<input className="w-4 h-4 rounded text-primary" type="checkbox" />
-<span className="font-body-sm text-body-sm text-slate-dark">Gençlik ve Mentorluk Ağı</span>
-</label>
-<label className="flex items-center gap-2 p-2.5 rounded bg-surface-container-low cursor-pointer hover:bg-surface-ice">
-<input className="w-4 h-4 rounded text-primary" type="checkbox" />
-<span className="font-body-sm text-body-sm text-slate-dark">Akademik Hakemli Yayınlar</span>
-</label>
-<label className="flex items-center gap-2 p-2.5 rounded bg-surface-container-low cursor-pointer hover:bg-surface-ice">
-<input className="w-4 h-4 rounded text-primary" type="checkbox" />
-<span className="font-body-sm text-body-sm text-slate-dark">Sürdürülebilirlik &amp; KSS</span>
-</label>
+{COMMITTEE_OPTIONS.map((comm) => {
+  const active = selectedCommittees.includes(comm);
+  return (
+    <label
+      key={comm}
+      className={`flex items-center gap-2 p-2.5 rounded cursor-pointer transition-colors ${
+        active
+          ? "bg-surface-ice ring-1 ring-primary/30"
+          : "bg-surface-container-low hover:bg-surface-ice"
+      }`}
+    >
+      <input
+        checked={active}
+        onChange={() => toggleCommittee(comm)}
+        className="w-4 h-4 rounded text-primary"
+        type="checkbox"
+      />
+      <span className="font-body-sm text-body-sm text-slate-dark">{comm}</span>
+    </label>
+  );
+})}
 </div>
 </div>
 <div className="flex justify-between pt-space-md">
@@ -880,23 +967,41 @@ export default function UyelikPage() {
 </div>
 {/*  Alternative Interview Option Checkbox  */}
 <div className="p-space-md rounded-lg bg-surface-ice flex items-start gap-space-sm">
-<input className="w-4 h-4 rounded text-primary mt-1" id="interview_opt" type="checkbox" />
+<input
+  checked={interviewOpt}
+  onChange={(e) => setInterviewOpt(e.target.checked)}
+  className="w-4 h-4 rounded text-primary mt-1"
+  id="interview_opt"
+  type="checkbox"
+/>
 <label className="font-body-sm text-body-sm text-slate-dark" htmlFor="interview_opt">
 <strong>Ankara dışında görev yapıyorum veya 2 asil üye referansım henüz bulunmuyor:</strong> Sicil Kurulu ile çevrim içi/fiziki 15 dakikalık mülakat yapılmasını ve geçici referans komisyonuna aktarılmamı talep ediyorum.
               </label>
 </div>
 {/*  File Upload Dropzone  */}
 <div>
-<label className="block font-label-sm text-label-sm text-slate-dark mb-1 font-bold">Özgeçmiş (CV) ve Varsa Portfolyo / Çalışma Özetleri</label>
-<label className="p-space-xl rounded-xl bg-surface-container-low text-center hover:bg-surface-ice transition-colors cursor-pointer flex flex-col items-center justify-center">
+<label className="block font-label-sm text-label-sm text-slate-dark mb-1 font-bold">Özgeçmiş (CV) Yükleme (PDF)</label>
+<label
+  onDragOver={(e) => {
+    e.preventDefault();
+    setIsDraggingCv(true);
+  }}
+  onDragLeave={() => setIsDraggingCv(false)}
+  onDrop={handleCvDrop}
+  className={`p-space-xl rounded-xl text-center transition-colors cursor-pointer flex flex-col items-center justify-center border-2 border-dashed ${
+    isDraggingCv
+      ? "bg-surface-ice border-primary"
+      : "bg-surface-container-low border-slate-200 hover:bg-surface-ice"
+  }`}
+>
 <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-primary mb-space-sm">
 <span className="material-symbols-outlined text-2xl">cloud_upload</span>
 </div>
 <div className="font-label-md text-label-md text-primary font-bold">
-  {uploadingCv ? "Supabase Storage'a Yükleniyor..." : "Dosyaları Buraya Sürükleyip Bırakın veya Seçin"}
+  {uploadingCv ? "Supabase Storage&apos;a Yükleniyor..." : "PDF Dosyasını Buraya Sürükleyip Bırakın veya Seçin"}
 </div>
-<div className="font-body-sm text-body-sm text-slate-muted mt-1">PDF, DOCX formatında (Maksimum 10MB • Supabase Storage)</div>
-<input type="file" onChange={handleCvUpload} accept=".pdf,.doc,.docx" className="mt-3 text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary-container" />
+<div className="font-body-sm text-body-sm text-slate-muted mt-1">Güvenlik doğrulamalı PDF formatında (Maksimum 5MB)</div>
+<input type="file" onChange={handleCvUpload} accept=".pdf,application/pdf" className="mt-3 text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary-container" />
 {cvName && (
   <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
     <span className="material-symbols-outlined text-sm">check_circle</span>
@@ -938,19 +1043,19 @@ export default function UyelikPage() {
 {/*  Legal Consents Checkboxes  */}
 <div className="space-y-space-sm pt-space-xs">
 <label className="flex items-start gap-3 p-3 rounded-lg bg-surface-container-lowest shadow-sm cursor-pointer hover:bg-surface-ice">
-<input defaultChecked className="w-4 h-4 rounded text-primary mt-1" required type="checkbox" />
+<input checked={consentDeontology} onChange={(e) => setConsentDeontology(e.target.checked)} className="w-4 h-4 rounded text-primary mt-1" required type="checkbox" />
 <span className="font-body-sm text-body-sm text-slate-dark">
 <strong>Mesleki Deontoloji Taahhüdü:</strong> AHİD Tüzüğü, Meslek Etiği İlkeleri ve Yönetmelik hükümlerine uymayı, aksi durumda Etik Kurulu yaptırımlarını kabul ettiğimi beyan ederim.
                 </span>
 </label>
 <label className="flex items-start gap-3 p-3 rounded-lg bg-surface-container-lowest shadow-sm cursor-pointer hover:bg-surface-ice">
-<input defaultChecked className="w-4 h-4 rounded text-primary mt-1" required type="checkbox" />
+<input checked={consentKvkk} onChange={(e) => setConsentKvkk(e.target.checked)} className="w-4 h-4 rounded text-primary mt-1" required type="checkbox" />
 <span className="font-body-sm text-body-sm text-slate-dark">
 <strong>KVKK ve İletişim İzni:</strong> 6698 sayılı Kişisel Verilerin Korunması Kanunu uyarınca verilerimin dernek sicil kütüğünde işlenmesini ve resmi bilgilendirme bültenlerinin iletilmesini onaylıyorum.
                 </span>
 </label>
 <label className="flex items-start gap-3 p-3 rounded-lg bg-surface-container-lowest shadow-sm cursor-pointer hover:bg-surface-ice">
-<input defaultChecked className="w-4 h-4 rounded text-primary mt-1" required type="checkbox" />
+<input checked={consentTruth} onChange={(e) => setConsentTruth(e.target.checked)} className="w-4 h-4 rounded text-primary mt-1" required type="checkbox" />
 <span className="font-body-sm text-body-sm text-slate-dark">
                   Verdiğim tüm bilgi ve belgelerin gerçeğe uygun olduğunu, gerçeğe aykırı beyan durumunda üyeliğimin iptal edileceğini teyit ederim.
                 </span>
@@ -965,7 +1070,7 @@ export default function UyelikPage() {
 <button className="w-full sm:w-auto px-4 py-2.5 rounded bg-surface-container text-primary font-label-md text-label-md hover:bg-surface-container-high transition-colors cursor-pointer" onClick={saveDraft} type="button">
                   Taslağı Kaydet
                 </button>
-<button disabled={submitting} className="inline-flex items-center justify-center gap-2 bg-[#0b3d91] hover:bg-[#082b66] disabled:opacity-60 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer" type="submit">
+<button disabled={submitting || !membershipOpen} className="inline-flex items-center justify-center gap-2 bg-[#0b3d91] hover:bg-[#082b66] disabled:opacity-60 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer" type="submit">
 <span className="material-symbols-outlined text-base">verified</span>
 <span>{submitting ? "Başvuru Gönderiliyor..." : "Başvuruyu Tamamla ve Gönder"}</span>
 </button>
@@ -979,10 +1084,10 @@ export default function UyelikPage() {
 </div>
 <h4 className="font-headline-lg text-headline-lg text-primary font-bold">Başvurunuz Başarıyla Alındı!</h4>
 <p className="font-body-md text-body-md text-slate-muted max-w-lg mx-auto">
-              Başvuru Takip Kodunuz: <strong className="text-primary font-mono font-bold">{appNo}</strong>. Başvuru dosyanız Sicil Kurulu'na sevk edilmiştir. Gelişmeler e-posta ve SMS ile tarafınıza bildirilecektir.
+              Başvuru Takip Kodunuz: <strong className="text-primary font-mono font-bold">{appNo}</strong>. Başvuru dosyanız Sicil Kurulu&apos;na sevk edilmiştir. Değerlendirme sonucu e-posta ile tarafınıza bildirilecektir.
             </p>
 <div className="pt-space-sm">
-<button className="px-6 py-2.5 rounded bg-primary text-on-primary font-label-md text-label-md cursor-pointer" onClick={() => { formRef.current?.reset(); setCvUrl(""); setCvName(""); setSelectedTier("asil"); setStepError(""); setSubmitError(""); setSubmitted(false); setStep(1); }} type="button">
+<button className="px-6 py-2.5 rounded bg-primary text-on-primary font-label-md text-label-md cursor-pointer" onClick={() => { formRef.current?.reset(); setCvUrl(""); setCvName(""); setSelectedTier("asil"); setSelectedCommittees([]); setInterviewOpt(false); setConsentDeontology(false); setConsentKvkk(false); setConsentTruth(false); setStepError(""); setSubmitError(""); setSubmitted(false); setStep(1); }} type="button">
                 Yeni Başvuru / Formu Temizle
               </button>
 </div>
@@ -999,7 +1104,7 @@ export default function UyelikPage() {
 <span className="font-caption-caps text-caption-caps text-gold-deep font-bold uppercase tracking-wider">KURUMSAL DENETİM &amp; MEVZUAT</span>
 <h2 className="font-headline-xl text-headline-xl text-primary font-bold">Başkentin En Prestijli İletişim Ağına Katılın</h2>
 <p className="font-body-md text-body-md text-slate-muted leading-relaxed">
-            AHİD Sicil ve Akreditasyon Kurulu; Türkiye'nin en köklü iletişim fakültelerinden profesörler, kıdemli kamu sözcüleri ve uluslararası halkla ilişkiler ajansı liderlerinden oluşur. Derneğimize üye olan her iletişimci, bağımsız bir liyakat filtresinden geçer.
+            AHİD Sicil ve Akreditasyon Kurulu; Türkiye&apos;nin en köklü iletişim fakültelerinden profesörler, kıdemli kamu sözcüleri ve uluslararası halkla ilişkiler ajansı liderlerinden oluşur. Derneğimize üye olan her iletişimci, bağımsız bir liyakat filtresinden geçer.
           </p>
 <div className="p-space-md rounded-xl bg-surface-ice flex items-center gap-space-md">
 <span className="material-symbols-outlined text-3xl text-primary">diversity_3</span>
@@ -1076,19 +1181,19 @@ export default function UyelikPage() {
     id: 3,
     question: "Üyelik başvurum ne kadar sürede sonuçlanır?",
     answer:
-      "Başvurunuz alındıktan sonra 3-5 iş günü içerisinde sicil ön tetkiki tamamlanır. Yönetim Kurulu her ayın 1. ve 3. haftası toplanarak dernekler kanunundaki 30 günlük yasal süreden çok daha önce (ortalama 10-14 gün içerisinde) kabul kararını e-posta ve resmi SMS ile sonuçlandırır.",
+      "Başvurunuz alındıktan sonra 3-5 iş günü içerisinde sicil ön tetkiki tamamlanır. Yönetim Kurulu her ayın 1. ve 3. haftası toplanarak dernekler kanunundaki 30 günlük yasal süreden çok daha önce kabul kararını kayıtlı e-posta adresiniz üzerinden tarafınıza iletir.",
   },
   {
     id: 4,
-    question: "Aidat ödemeleri hangi yöntemlerle yapılır ve faturalandırılır mı?",
+    question: "Aidat ödemeleri hangi yöntemlerle yapılır ve belgelendirilir?",
     answer:
-      "Kabul kararı tebliğ edildikten sonra derneğimizin resmi banka hesaplarına havale/EFT ile ya da AHİD Üye Portalı üzerinden kredi kartı ile ödenebilir. Ödemeler dernek alındı belgesi (makbuz) veya kurumsal fatura şeklinde tevsik edilir.",
+      "Kabul kararı onaylandıktan sonra oluşturulan üye hesabınız üzerinden aidat dönemlerinizi görüntüleyebilir, derneğimizin resmi banka hesaplarına havale/EFT yoluyla ödeme yapıp Üye Portalı üzerinden dekont referans numaranızı Saymanlık onayına iletebilirsiniz.",
   },
   {
     id: 5,
-    question: "AHİD Akreditasyon belgesi uluslararası alanda geçerli midir?",
+    question: "Dijital Üye Kimlik Kartı nasıl doğrulanır?",
     answer:
-      "Evet; AHİD, uluslararası halkla ilişkiler ve iletişim yönetimi standartlarıyla uyumlu müfredat ve sürekli mesleki gelişim (CPD) kredilendirmesi uygular. Verilen akreditasyon sertifikaları karekodlu ve İngilizce/Türkçe çift dilli olarak doğrulanabilir.",
+      "Onaylanan her AHİD üyesi için benzersiz üye numarası ve doğrulama karekodu (QR) üretilir. Kart üzerindeki karekod okutularak üyelik aktifliği resmi portal üzerinden anlık olarak doğrulanabilir.",
   },
 ].map((faq) => {
   const isOpen = Boolean(openFaqs[faq.id]);

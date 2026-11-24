@@ -23,12 +23,23 @@ export default function AdminProtokolPage() {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "all" | "press" | "diplomatic" | "appointments" | "kep"
+    "all" | "press" | "diplomatic" | "appointments" | "archive"
   >("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Reply Composer State
+  const [replyTarget, setReplyTarget] = useState<ContactMessage | null>(null);
+  const [replySubject, setReplySubject] = useState("");
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replySending, setReplySending] = useState(false);
+  const [replyResult, setReplyResult] = useState<{
+    sent: boolean;
+    message: string;
+    mailtoUrl?: string;
+  } | null>(null);
 
   // New Protocol/Contact Message Form
   const [newRequest, setNewRequest] = useState({
@@ -46,8 +57,8 @@ export default function AdminProtokolPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const loadMessages = async () => {
-    setLoading(true);
+  const loadMessages = async (withSpinner = false) => {
+    if (withSpinner) setLoading(true);
     try {
       const res = await fetch("/api/contact");
       const data = await res.json();
@@ -62,8 +73,76 @@ export default function AdminProtokolPage() {
   };
 
   useEffect(() => {
-    loadMessages();
+    let active = true;
+    fetch("/api/contact")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        if (data.success && Array.isArray(data.messages)) {
+          setMessages(data.messages);
+        }
+      })
+      .catch((err) =>
+        console.error("Protokol talepleri yüklenirken hata:", err)
+      )
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const handleSendReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyTarget || !replyMessage.trim()) return;
+    setReplySending(true);
+    setReplyResult(null);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: replyTarget.id,
+          status: "replied",
+          reply_subject: replySubject.trim(),
+          reply_message: replyMessage.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.message) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === replyTarget.id ? (data.message as ContactMessage) : m
+            )
+          );
+        }
+        const emailInfo = data.emailResult as
+          | { sent?: boolean; message?: string; mailtoUrl?: string }
+          | undefined;
+        setReplyResult({
+          sent: Boolean(emailInfo?.sent),
+          message:
+            emailInfo?.message ||
+            "Yanıt kaydı arşive işlendi.",
+          mailtoUrl: emailInfo?.mailtoUrl,
+        });
+        setReplyMessage("");
+        showToast(
+          emailInfo?.sent
+            ? "Yanıt alıcıya Resend ile gönderildi."
+            : "Yanıt kaydedildi. Mail istemcisi ile gönderebilirsiniz."
+        );
+      } else {
+        showToast(data.error || "Yanıt gönderilemedi.");
+      }
+    } catch {
+      showToast("Sunucu iletişim hatası.");
+    } finally {
+      setReplySending(false);
+    }
+  };
 
   const handleUpdateStatus = async (
     id: number,
@@ -149,7 +228,7 @@ export default function AdminProtokolPage() {
 
   const matchesTab = (
     m: ContactMessage,
-    tab: "all" | "press" | "diplomatic" | "appointments" | "kep"
+    tab: "all" | "press" | "diplomatic" | "appointments" | "archive"
   ) => {
     if (tab === "all") return true;
     const haystack = `${m.department || ""} ${m.subject || ""} ${m.type || ""} ${m.message || ""}`.toLowerCase();
@@ -163,14 +242,15 @@ export default function AdminProtokolPage() {
       return (
         m.status === "approved" ||
         m.type === "protocol_request" ||
+        m.type === "protocol_appointment" ||
         /randevu|görüşme|toplantı/.test(haystack)
       );
     }
-    if (tab === "kep") {
+    if (tab === "archive") {
       return (
         m.status === "archived" ||
         m.status === "replied" ||
-        /kep|tebligat|arşiv|yazışma|genel/.test(haystack)
+        /tebligat|arşiv|yazışma|genel/.test(haystack)
       );
     }
     return true;
@@ -372,7 +452,7 @@ export default function AdminProtokolPage() {
             </div>
           </div>
 
-          {/* 3. Ana Çalışma Alanı: Sol 8 Kolon (Talepler) + Sağ 4 Kolon (Günlük Ajanda & KEP) */}
+          {/* 3. Ana Çalışma Alanı: Sol 8 Kolon (Talepler) + Sağ 4 Kolon (Günlük Ajanda & İletişim) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Sol 8 Kolon */}
             <div className="lg:col-span-8 flex flex-col gap-4">
@@ -420,14 +500,14 @@ export default function AdminProtokolPage() {
                     Randevu Defteri ({messages.filter((m) => matchesTab(m, "appointments")).length})
                   </button>
                   <button
-                    onClick={() => setActiveTab("kep")}
+                    onClick={() => setActiveTab("archive")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-colors ${
-                      activeTab === "kep"
+                      activeTab === "archive"
                         ? "bg-[#002869] text-white"
                         : "bg-[#f1f5f9] text-[#475569] hover:bg-[#e2e8f0]"
                     }`}
                   >
-                    Arşiv &amp; Yazışma ({messages.filter((m) => matchesTab(m, "kep")).length})
+                    Arşiv &amp; Yazışma ({messages.filter((m) => matchesTab(m, "archive")).length})
                   </button>
                 </div>
 
@@ -504,6 +584,12 @@ export default function AdminProtokolPage() {
                       {msg.message}
                     </p>
 
+                    {msg.admin_notes && (
+                      <p className="text-[11px] text-[#002869] mt-2 whitespace-pre-line bg-[#f0f3ff] p-2.5 rounded-lg border border-[#dee8ff]">
+                        {msg.admin_notes}
+                      </p>
+                    )}
+
                     <div className="mt-4 pt-3 border-t border-[#f1f5f9] flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-[#002869] text-white flex items-center justify-center font-bold text-xs">
@@ -529,9 +615,14 @@ export default function AdminProtokolPage() {
                           Randevu Ver
                         </button>
                         <button
-                          onClick={() =>
-                            handleUpdateStatus(msg.id, "replied")
-                          }
+                          onClick={() => {
+                            setReplyTarget(msg);
+                            setReplySubject(
+                              `Ynt: ${msg.subject || "AHİD İletişim Talebiniz"}`
+                            );
+                            setReplyMessage("");
+                            setReplyResult(null);
+                          }}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#ebf2fc] hover:bg-[#dee8ff] text-[#002869] cursor-pointer"
                         >
                           Yanıtla
@@ -554,7 +645,7 @@ export default function AdminProtokolPage() {
               )}
             </div>
 
-            {/* Sağ 4 Kolon: Günlük Ajanda & KEP Durumu */}
+            {/* Sağ 4 Kolon: Günlük Ajanda & İletişim Özeti */}
             <div className="lg:col-span-4 flex flex-col gap-4">
               {/* Protokol Heyet Ajandası (Veritabanı Kayıtları) */}
               <div className="bg-white rounded-xl border border-[#e2e8f0] p-5 shadow-xs">
@@ -609,7 +700,7 @@ export default function AdminProtokolPage() {
                 )}
               </div>
 
-              {/* Kurumsal İletişim & KEP Adresi Referansı */}
+              {/* Kurumsal İletişim Özeti */}
               <div className="bg-white rounded-xl border border-[#e2e8f0] p-4 shadow-xs text-xs">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
@@ -621,15 +712,15 @@ export default function AdminProtokolPage() {
                 </div>
                 <div className="space-y-2 text-[#334155]">
                   <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
-                    <span>KEP Adresi</span>
-                    <span className="font-mono font-bold text-[#002869]">
-                      ahid@hs01.kep.tr
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
                     <span>Genel Sekreterlik</span>
                     <span className="font-semibold text-[#002869]">
                       info@ahid.org.tr
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                    <span>Yanıtlanan / Arşiv</span>
+                    <span className="font-bold text-emerald-700">
+                      {resolvedCount} kayıt
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-1">
@@ -752,6 +843,99 @@ export default function AdminProtokolPage() {
                   className="px-5 py-2 rounded-lg bg-[#002869] text-white hover:bg-[#1a4087] font-bold shadow-xs cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? "Kaydediliyor..." : "Talebi Deftere Ekle"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Resmi Yanıt Oluşturma Modal */}
+      {replyTarget && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-[#e2e8f0]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0]">
+              <div>
+                <h3 className="font-bold text-base text-[#002869]">
+                  Resmi Yanıt Gönder
+                </h3>
+                <p className="text-[11px] text-[#64748b]">
+                  Alıcı: {replyTarget.name} ({replyTarget.email})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyTarget(null)}
+                className="text-[#64748b] hover:text-[#002869] cursor-pointer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSendReply} className="mt-4 space-y-3 text-xs">
+              <div>
+                <label className="block text-[#475569] font-semibold mb-1">
+                  Konu *
+                </label>
+                <input
+                  required
+                  value={replySubject}
+                  onChange={(e) => setReplySubject(e.target.value)}
+                  className="w-full bg-[#f8fafc] border border-[#cbd5e1] rounded-lg p-2 focus:outline-none focus:border-[#002869]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#475569] font-semibold mb-1">
+                  Yanıt Metni *
+                </label>
+                <textarea
+                  rows={5}
+                  required
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder="Sayın ilgili, talebiniz değerlendirilmiş olup..."
+                  className="w-full bg-[#f8fafc] border border-[#cbd5e1] rounded-lg p-2 focus:outline-none focus:border-[#002869]"
+                />
+              </div>
+
+              {replyResult && (
+                <div
+                  className={`p-3 rounded-lg border text-xs space-y-2 ${
+                    replyResult.sent
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                      : "bg-amber-50 border-amber-200 text-amber-800"
+                  }`}
+                >
+                  <p className="font-semibold">{replyResult.message}</p>
+                  {!replyResult.sent && replyResult.mailtoUrl && (
+                    <a
+                      href={replyResult.mailtoUrl}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#002869] text-white font-bold hover:bg-[#1a4087]"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        mail
+                      </span>
+                      E-posta İstemcisinde Aç (mailto)
+                    </a>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-[#e2e8f0] flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReplyTarget(null)}
+                  className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold cursor-pointer"
+                >
+                  Kapat
+                </button>
+                <button
+                  type="submit"
+                  disabled={replySending}
+                  className="px-5 py-2 rounded-lg bg-[#002869] text-white hover:bg-[#1a4087] font-bold shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  {replySending ? "İşleniyor..." : "Yanıtı Kaydet & Gönder"}
                 </button>
               </div>
             </form>

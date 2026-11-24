@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import { EVENT_DEFAULT_CAPACITY } from "@/lib/constants";
 
 interface EventItem {
   id: number;
@@ -71,8 +72,8 @@ export default function AdminEtkinliklerPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const loadEvents = async () => {
-    setLoading(true);
+  const loadEvents = async (withSpinner = false) => {
+    if (withSpinner) setLoading(true);
     try {
       const [evRes, regRes] = await Promise.all([
         fetch("/api/events"),
@@ -94,7 +95,23 @@ export default function AdminEtkinliklerPage() {
   };
 
   useEffect(() => {
-    loadEvents();
+    let active = true;
+    Promise.all([
+      fetch("/api/events").then((r) => r.json()).catch(() => null),
+      fetch("/api/events/register").then((r) => r.json()).catch(() => null),
+    ]).then(([evData, regData]) => {
+      if (!active) return;
+      if (evData?.success && Array.isArray(evData.events)) {
+        setEvents(evData.events);
+      }
+      if (regData?.success && Array.isArray(regData.registrations)) {
+        setRegistrations(regData.registrations);
+      }
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const resetEventForm = () => {
@@ -246,7 +263,7 @@ export default function AdminEtkinliklerPage() {
       return;
     }
 
-    await handleCheckInParticipant(match.id, match.status === "checked_in" ? "confirmed" : "confirmed");
+    await handleCheckInParticipant(match.id, match.status);
     setTestQrCode("");
   };
 
@@ -608,12 +625,26 @@ export default function AdminEtkinliklerPage() {
                               <div
                                 className="bg-[#002869] h-2 rounded-full transition-all"
                                 style={{
-                                  width: `${Math.min(100, Math.max(8, (ev.registrations_count || 0) * 10))}%`,
+                                  width: `${
+                                    (ev.registrations_count || 0) === 0
+                                      ? 0
+                                      : Math.min(
+                                          100,
+                                          Math.max(
+                                            4,
+                                            Math.round(
+                                              ((ev.registrations_count || 0) /
+                                                EVENT_DEFAULT_CAPACITY) *
+                                                100
+                                            )
+                                          )
+                                        )
+                                  }%`,
                                 }}
                               />
                             </div>
                             <span className="text-[11px] text-[#64748b] font-medium">
-                              {ev.registrations_count ?? 0} Kayıtlı Katılımcı
+                              {ev.registrations_count ?? 0} / {EVENT_DEFAULT_CAPACITY} Katılımcı
                             </span>
                           </div>
 

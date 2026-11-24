@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import { parseApplicationMeta } from "@/lib/constants";
 
 interface Application {
   id: number | string;
@@ -20,9 +21,20 @@ interface Application {
   graduation_year?: string;
   cv_url?: string | null;
   linkedin_url?: string | null;
+  committees?: string[];
+  references?: string[];
   status: string;
   admin_notes?: string;
   created_at?: string;
+}
+
+interface ProvisionedAccountInfo {
+  created: boolean;
+  email: string;
+  member_no: string;
+  temporary_password?: string;
+  email_sent: boolean;
+  email_message: string;
 }
 
 interface MemberDueRecord {
@@ -61,8 +73,11 @@ export default function AdminUyelikPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [syncingDerbis, setSyncingDerbis] = useState(false);
+  const [refreshingRecords, setRefreshingRecords] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [provisionedAccount, setProvisionedAccount] =
+    useState<ProvisionedAccountInfo | null>(null);
+  const [reviewerNote, setReviewerNote] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newDue, setNewDue] = useState({
@@ -111,16 +126,14 @@ export default function AdminUyelikPage() {
     }
   };
 
-  const loadApplications = async () => {
-    setLoading(true);
+  const loadApplications = async (withSpinner = false) => {
+    if (withSpinner) setLoading(true);
     try {
       const res = await fetch("/api/applications");
       const data = await res.json();
       if (data.success && Array.isArray(data.applications)) {
         setApplications(data.applications);
-        if (data.applications.length > 0 && !selectedApp) {
-          setSelectedApp(data.applications[0]);
-        }
+        setSelectedApp((prev) => prev || data.applications[0] || null);
       }
     } catch (err) {
       console.error("Başvurular yüklenirken hata:", err);
@@ -130,8 +143,32 @@ export default function AdminUyelikPage() {
   };
 
   useEffect(() => {
-    loadApplications();
-    loadDues();
+    let active = true;
+    Promise.all([
+      fetch("/api/applications").then((r) => r.json()).catch(() => null),
+      fetch("/api/member-dues").then((r) => r.json()).catch(() => null),
+    ]).then(([appsData, duesData]) => {
+      if (!active) return;
+      if (appsData?.success && Array.isArray(appsData.applications)) {
+        setApplications(appsData.applications);
+        setSelectedApp(appsData.applications[0] || null);
+      }
+      if (duesData?.success) {
+        setDuesList(duesData.dues || []);
+        setPortalMembers(duesData.members || []);
+        setNewDue((prev) => ({
+          ...prev,
+          user_id:
+            prev.user_id ||
+            (duesData.members?.length > 0 ? String(duesData.members[0].id) : ""),
+          period: prev.period || `${new Date().getFullYear()} Yıllık Aidat`,
+        }));
+      }
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleUpdateStatus = async (
@@ -140,24 +177,27 @@ export default function AdminUyelikPage() {
     notes?: string
   ) => {
     try {
+      const effectiveNote =
+        notes !== undefined ? notes : reviewerNote.trim() || undefined;
       const res = await fetch("/api/applications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id,
           status: newStatus,
-          admin_notes: notes || undefined,
+          admin_notes: effectiveNote,
         }),
       });
       const data = await res.json();
       if (data.success) {
+        const updatedApp = (data.application as Application | undefined) || null;
         setApplications((prev) =>
           prev.map((app) =>
             app.id === id
-              ? {
+              ? updatedApp || {
                   ...app,
                   status: newStatus,
-                  admin_notes: notes || app.admin_notes,
+                  admin_notes: effectiveNote || app.admin_notes,
                 }
               : app
           )
@@ -165,20 +205,27 @@ export default function AdminUyelikPage() {
         if (selectedApp && selectedApp.id === id) {
           setSelectedApp((prev) =>
             prev
-              ? {
+              ? updatedApp || {
                   ...prev,
                   status: newStatus,
-                  admin_notes: notes || prev.admin_notes,
+                  admin_notes: effectiveNote || prev.admin_notes,
                 }
               : null
           );
         }
+        if (data.provisionedAccount) {
+          setProvisionedAccount(
+            data.provisionedAccount as ProvisionedAccountInfo
+          );
+          await loadDues();
+        }
+        setReviewerNote("");
         showToast(
           newStatus === "approved"
-            ? "Müracaat onaylandı ve sicil kaydı güncellendi!"
+            ? "Müracaat onaylandı ve üye hesabı oluşturuldu!"
             : newStatus === "missing_docs"
-            ? "Adaya eksik evrak tamamlama bildirimi iletildi."
-            : "Başvuru reddedildi ve gerekçe sicil defterine işlendi."
+            ? "Adaya eksik evrak tamamlama durumu işlendi."
+            : "Başvuru reddedildi ve karar sicil defterine işlendi."
         );
       } else {
         showToast(data.error || "İşlem başarısız.");
@@ -276,13 +323,13 @@ export default function AdminUyelikPage() {
     }
   };
 
-  const handleSyncDerbis = async () => {
-    setSyncingDerbis(true);
+  const handleRefreshRecords = async () => {
+    setRefreshingRecords(true);
     try {
-      await Promise.all([loadApplications(), loadDues()]);
+      await Promise.all([loadApplications(true), loadDues()]);
       showToast("Üyelik başvuruları, portal hesapları ve aidat kayıtları güncellendi.");
     } finally {
-      setSyncingDerbis(false);
+      setRefreshingRecords(false);
     }
   };
 
@@ -299,7 +346,7 @@ export default function AdminUyelikPage() {
           }","${a.status}","${a.created_at || ""}"`
       )
       .join("\n");
-    const blob = new Blob([headers + rows], {
+    const blob = new Blob(["\uFEFF" + headers + rows], {
       type: "text/csv;charset=utf-8;",
     });
     const url = URL.createObjectURL(blob);
@@ -309,7 +356,8 @@ export default function AdminUyelikPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast("Üyelik verileri CSV formatında dışa aktarıldı.");
+    URL.revokeObjectURL(url);
+    showToast("Üyelik verileri Excel uyumlu UTF-8 CSV formatında dışa aktarıldı.");
   };
 
   // Filtered applications
@@ -408,7 +456,7 @@ export default function AdminUyelikPage() {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-[#64748b] leading-relaxed">
-                Yeni üyelik müracaatları, evrak doğrulama, DERBİS sicil onayı,
+                Yeni üyelik müracaatları, evrak doğrulama, kurul sicil onayı,
                 aidat takibi ve dijital üye kartı akreditasyon iş akışı.
               </p>
             </div>
@@ -427,20 +475,20 @@ export default function AdminUyelikPage() {
               </button>
 
               <button
-                onClick={handleSyncDerbis}
-                disabled={syncingDerbis}
+                onClick={handleRefreshRecords}
+                disabled={refreshingRecords}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#ebf2fc] text-[#002869] hover:bg-[#dee8ff] text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
                 type="button"
               >
                 <span
                   className={`material-symbols-outlined text-[18px] text-[#225aba] ${
-                    syncingDerbis ? "animate-spin" : ""
+                    refreshingRecords ? "animate-spin" : ""
                   }`}
                 >
                   sync
                 </span>
                 <span>
-                  {syncingDerbis ? "Eşitleniyor..." : "Kayıtları Yenile"}
+                  {refreshingRecords ? "Eşitleniyor..." : "Kayıtları Yenile"}
                 </span>
               </button>
 
@@ -1077,8 +1125,71 @@ export default function AdminUyelikPage() {
                     </div>
                   </div>
 
-                  {/* DERBİS ve Karar Eylemleri */}
+                  {/* Komisyon ve Referans Beyanları */}
+                  {(() => {
+                    const parsedApp = parseApplicationMeta(selectedApp.admin_notes);
+                    const committees =
+                      selectedApp.committees && selectedApp.committees.length > 0
+                        ? selectedApp.committees
+                        : parsedApp.meta.committees;
+                    const references =
+                      selectedApp.references && selectedApp.references.length > 0
+                        ? selectedApp.references
+                        : parsedApp.meta.references;
+                    return (
+                      <div className="space-y-2 text-xs bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0]">
+                        <div>
+                          <span className="font-bold text-[#475569] block mb-1">
+                            Tercih Edilen Komisyonlar:
+                          </span>
+                          {committees.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {committees.map((c, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-2 py-0.5 rounded bg-[#ebf2fc] text-[#002869] font-semibold text-[11px]"
+                                >
+                                  {c}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-[#64748b]">Komisyon tercihi belirtilmedi</span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="font-bold text-[#475569] block mb-0.5">
+                            Üye Referansları:
+                          </span>
+                          <span className="text-[#334155]">
+                            {references.length > 0
+                              ? references.join(" • ")
+                              : "Referans bilgisi girilmedi"}
+                          </span>
+                        </div>
+                        {parsedApp.note && (
+                          <div>
+                            <span className="font-bold text-[#475569] block mb-0.5">
+                              Kurul İnceleme Notu:
+                            </span>
+                            <span className="text-[#002869] font-medium">
+                              {parsedApp.note}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Kurul İnceleme Notu & Karar Eylemleri */}
                   <div className="pt-2 border-t border-[#e2e8f0] flex flex-col gap-2">
+                    <input
+                      type="text"
+                      value={reviewerNote}
+                      onChange={(e) => setReviewerNote(e.target.value)}
+                      placeholder="İnceleme / karar notu (opsiyonel)..."
+                      className="w-full px-3 py-2 rounded-lg bg-[#f8fafc] border border-[#cbd5e1] text-xs focus:outline-none focus:border-[#002869]"
+                    />
                     <button
                       onClick={() =>
                         handleUpdateStatus(selectedApp.id, "approved")
@@ -1088,7 +1199,7 @@ export default function AdminUyelikPage() {
                       <span className="material-symbols-outlined text-[18px]">
                         how_to_reg
                       </span>
-                      Onayla &amp; DERBİS&apos;e Aktar
+                      Onayla &amp; Üye Hesabını Aktifleştir
                     </button>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -1311,6 +1422,84 @@ export default function AdminUyelikPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Onaylanan Üye Hesap Bilgisi Modal */}
+      {provisionedAccount && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#e2e8f0] space-y-4">
+            <div className="flex items-start justify-between gap-2 pb-3 border-b border-[#e2e8f0]">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                  Üyelik Onayı &amp; Hesap Aktivasyonu
+                </span>
+                <h3 className="font-bold text-base text-[#002869] mt-0.5">
+                  Üye Hesap Bilgileri Hazır
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setProvisionedAccount(null)}
+                className="text-[#64748b] hover:text-[#002869] cursor-pointer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="bg-[#f8fafc] p-4 rounded-xl border border-[#e2e8f0] space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-[#64748b]">Sicil / Üye No:</span>
+                <span className="font-mono font-bold text-[#002869]">
+                  {provisionedAccount.member_no}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#64748b]">E-Posta:</span>
+                <span className="font-semibold text-[#0f172a]">
+                  {provisionedAccount.email}
+                </span>
+              </div>
+              {provisionedAccount.temporary_password && (
+                <div className="pt-2 border-t border-[#e2e8f0] flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[#64748b] block">
+                      Tek Kullanımlık Geçici Şifre:
+                    </span>
+                    <code className="font-mono text-sm font-bold text-[#92400e]">
+                      {provisionedAccount.temporary_password}
+                    </code>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        provisionedAccount.temporary_password || ""
+                      );
+                      showToast("Geçici şifre panoya kopyalandı.");
+                    }}
+                    className="px-2.5 py-1.5 rounded bg-[#ebf2fc] text-[#002869] font-bold cursor-pointer hover:bg-[#dee8ff]"
+                  >
+                    Kopyala
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-[#475569] leading-relaxed">
+              {provisionedAccount.email_message}
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setProvisionedAccount(null)}
+                className="px-5 py-2 rounded-lg bg-[#002869] text-white text-xs font-bold cursor-pointer hover:bg-[#1a4087]"
+              >
+                Tamam
+              </button>
+            </div>
           </div>
         </div>
       )}

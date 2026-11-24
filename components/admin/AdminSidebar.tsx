@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 interface AdminSidebarProps {
   currentPath: string;
@@ -47,9 +48,11 @@ export default function AdminSidebar({
               className="w-10 h-10 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0"
               title="Ana Sayfaya Git"
             >
-              <img
+              <Image
                 src="/ahid-logo.png"
                 alt="AHİD Logo"
+                width={40}
+                height={40}
                 className="w-full h-full object-contain"
               />
             </Link>
@@ -143,7 +146,7 @@ export default function AdminSidebar({
             </span>
           </div>
           <p className="text-xs text-[#334155] leading-tight">
-            Resmi Protokol Veritabanı ve KEP Altyapısı Korunmaktadır.
+            AHİD Kurumsal Veri Tabanı ve Yetkili Oturum Koruması Aktif.
           </p>
         </div>
       </aside>

@@ -14,7 +14,63 @@ function normalizeEventCategory(cat?: string): "summit" | "masterclass" | "forum
   return "forum";
 }
 
-function getCategoryLabel(ev: any): string {
+interface EventItem {
+  id: number;
+  title: string;
+  category: string;
+  event_date: string;
+  event_time: string | null;
+  location: string | null;
+  summary: string | null;
+  description: string | null;
+  image_url: string | null;
+  is_featured: boolean | null;
+  registration_open: boolean | null;
+  registrations_count?: number;
+  capacity?: number;
+}
+
+const MONTH_NAMES_TR = [
+  "Ocak",
+  "Şubat",
+  "Mart",
+  "Nisan",
+  "Mayıs",
+  "Haziran",
+  "Temmuz",
+  "Ağustos",
+  "Eylül",
+  "Ekim",
+  "Kasım",
+  "Aralık",
+];
+
+function parseEventDateParts(dateStr?: string): {
+  year: number;
+  month: number;
+  day: number;
+} | null {
+  if (!dateStr) return null;
+  const iso = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    return {
+      year: Number(iso[1]),
+      month: Number(iso[2]) - 1,
+      day: Number(iso[3]),
+    };
+  }
+  const d = new Date(dateStr);
+  if (!Number.isNaN(d.getTime())) {
+    return {
+      year: d.getFullYear(),
+      month: d.getMonth(),
+      day: d.getDate(),
+    };
+  }
+  return null;
+}
+
+function getCategoryLabel(ev: EventItem): string {
   const norm = normalizeEventCategory(ev?.category);
   if (ev?.category && !["summit", "masterclass", "forum", "award"].includes(ev.category)) {
     return ev.category;
@@ -33,7 +89,10 @@ function toIcsDate(dateStr?: string): string {
 
 export default function EtkinliklerPage() {
   const [viewMode, setViewMode] = useState<"list" | "month">("list");
-  const [events, setEvents] = useState<any[]>([]);
+  const [calendarMonth, setCalendarMonth] = useState<Date>(
+    () => new Date(2026, 10, 1)
+  );
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [agendaSearch, setAgendaSearch] = useState<string>("");
@@ -42,11 +101,20 @@ export default function EtkinliklerPage() {
   const [agendaRequirement, setAgendaRequirement] = useState<string>("Tümü (Ücretsiz & Ücretli)");
   const [calendarFeedback, setCalendarFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [registeringEvent, setRegisteringEvent] = useState<any | null>(null);
+  const [registeringEvent, setRegisteringEvent] = useState<EventItem | null>(null);
   const [regStatus, setRegStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [regErrorMessage, setRegErrorMessage] = useState<string>("");
+  const [ticketResult, setTicketResult] = useState<{
+    ticketCode: string;
+    qrDataUrl: string;
+  } | null>(null);
 
   useEffect(() => {
+    const monthTimer = window.setTimeout(() => {
+      const d = new Date();
+      d.setDate(1);
+      setCalendarMonth(d);
+    }, 0);
     fetch("/api/events")
       .then((res) => res.json())
       .then((data) => {
@@ -56,22 +124,23 @@ export default function EtkinliklerPage() {
       })
       .catch((err) => console.error("Error fetching events:", err))
       .finally(() => setLoading(false));
+    return () => window.clearTimeout(monthTimer);
   }, []);
 
   const handleRegisterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!registeringEvent) return;
     setRegStatus("loading");
+    setRegErrorMessage("");
     const form = e.currentTarget;
     const formData = new FormData(form);
     const payload = {
       event_id: registeringEvent.id,
-      participant_name: formData.get("participant_name"),
-      participant_email: formData.get("participant_email"),
-      participant_phone: formData.get("participant_phone"),
+      full_name: formData.get("full_name"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
       organization: formData.get("organization"),
-      position: formData.get("position"),
-      notes: formData.get("notes"),
+      title: formData.get("title"),
     };
 
     try {
@@ -80,9 +149,26 @@ export default function EtkinliklerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
-      if (data.success) {
+      const data = (await res.json()) as {
+        success?: boolean;
+        error?: string;
+        ticketCode?: string;
+        qrDataUrl?: string;
+      };
+      if (res.ok && data.success) {
         setRegStatus("success");
+        setTicketResult(
+          data.ticketCode && data.qrDataUrl
+            ? { ticketCode: data.ticketCode, qrDataUrl: data.qrDataUrl }
+            : null
+        );
+        setEvents((prev) =>
+          prev.map((ev) =>
+            ev.id === registeringEvent.id
+              ? { ...ev, registrations_count: (ev.registrations_count || 0) + 1 }
+              : ev
+          )
+        );
       } else {
         setRegStatus("error");
         setRegErrorMessage(data.error || "Kayıt işlemi tamamlanamadı.");
@@ -275,20 +361,26 @@ export default function EtkinliklerPage() {
 {/*  Institutional Highlights Counter Strip  */}
 <div className="mt-space-lg grid grid-cols-2 md:grid-cols-4 gap-gutter-desktop">
 <div className="bg-surface-container-lowest/80 p-space-md rounded-xl backdrop-blur-sm shadow-sm flex flex-col">
-<div className="font-headline-lg text-headline-lg font-extrabold text-primary">120+</div>
-<div className="font-label-sm text-label-sm text-slate-muted uppercase tracking-wider mt-0.5">Gerçekleşen Etkinlik</div>
+<div className="font-headline-lg text-headline-lg font-extrabold text-primary">{events.length}</div>
+<div className="font-label-sm text-label-sm text-slate-muted uppercase tracking-wider mt-0.5">Planlı &amp; Arşiv Etkinlik</div>
 </div>
 <div className="bg-surface-container-lowest/80 p-space-md rounded-xl backdrop-blur-sm shadow-sm flex flex-col">
-<div className="font-headline-lg text-headline-lg font-extrabold text-secondary">4.500+</div>
-<div className="font-label-sm text-label-sm text-slate-muted uppercase tracking-wider mt-0.5">Katılımcı &amp; Delege</div>
+<div className="font-headline-lg text-headline-lg font-extrabold text-secondary">
+  {events.reduce((acc, ev) => acc + (ev.registrations_count || 0), 0)}
+</div>
+<div className="font-label-sm text-label-sm text-slate-muted uppercase tracking-wider mt-0.5">Kayıtlı Katılımcı</div>
 </div>
 <div className="bg-surface-container-lowest/80 p-space-md rounded-xl backdrop-blur-sm shadow-sm flex flex-col">
-<div className="font-headline-lg text-headline-lg font-extrabold text-gold-deep">8. Dönem</div>
-<div className="font-label-sm text-label-sm text-slate-muted uppercase tracking-wider mt-0.5">Altın Başak &amp; Başkent Ödülü</div>
+<div className="font-headline-lg text-headline-lg font-extrabold text-gold-deep">
+  {events.filter((ev) => ev.registration_open !== false).length}
+</div>
+<div className="font-label-sm text-label-sm text-slate-muted uppercase tracking-wider mt-0.5">Kayıta Açık Program</div>
 </div>
 <div className="bg-surface-container-lowest/80 p-space-md rounded-xl backdrop-blur-sm shadow-sm flex flex-col">
-<div className="font-headline-lg text-headline-lg font-extrabold text-primary-container">14</div>
-<div className="font-label-sm text-label-sm text-slate-muted uppercase tracking-wider mt-0.5">Akredite Masterclass</div>
+<div className="font-headline-lg text-headline-lg font-extrabold text-primary-container">
+  {new Set(events.map((ev) => getCategoryLabel(ev))).size}
+</div>
+<div className="font-label-sm text-label-sm text-slate-muted uppercase tracking-wider mt-0.5">Program Kategorisi</div>
 </div>
 </div>
 </div>
@@ -640,36 +732,108 @@ export default function EtkinliklerPage() {
         Ajanda Filtrelerini Sıfırla
       </button>
     </div>
-  ) : viewMode === "month" ? (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-sm">
-      {agendaFilteredEvents.map((ev) => (
-        <div key={ev.id} className="p-space-md rounded-lg bg-surface-container-low border border-slate-200/70 flex flex-col justify-between gap-3">
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className="bg-primary/10 text-primary font-caption-caps text-caption-caps px-2 py-0.5 rounded font-bold uppercase">
-                {getCategoryLabel(ev)}
-              </span>
-              <span className="text-xs font-bold text-secondary">{ev.event_date}</span>
-            </div>
-            <Link href={`/etkinlikler/${ev.id}`} className="font-label-md text-label-md font-bold text-primary hover:underline block">
-              {ev.title}
-            </Link>
-            <p className="font-body-sm text-body-sm text-slate-muted mt-1">{ev.location}</p>
+  ) : viewMode === "month" ? (() => {
+    const calYear = calendarMonth.getFullYear();
+    const calMonthIdx = calendarMonth.getMonth();
+    const firstWeekday = (new Date(calYear, calMonthIdx, 1).getDay() + 6) % 7; // Mon=0..Sun=6
+    const daysInMonth = new Date(calYear, calMonthIdx + 1, 0).getDate();
+    const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+    const monthEvents = agendaFilteredEvents.filter((ev) => {
+      const p = parseEventDateParts(ev.event_date);
+      return p && p.year === calYear && p.month === calMonthIdx;
+    });
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between bg-surface-container-low px-4 py-3 rounded-xl border border-slate-200/70">
+          <button
+            type="button"
+            onClick={() =>
+              setCalendarMonth(new Date(calYear, calMonthIdx - 1, 1))
+            }
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-primary hover:bg-surface-ice cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">chevron_left</span>
+            Önceki Ay
+          </button>
+          <div className="text-center">
+            <h4 className="font-headline-sm font-bold text-primary">
+              {MONTH_NAMES_TR[calMonthIdx]} {calYear}
+            </h4>
+            <p className="text-[11px] text-slate-500">
+              Bu ayda {monthEvents.length} etkinlik planlandı
+            </p>
           </div>
-          <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
-            <span className="text-xs text-slate-500">{ev.event_time || "10:00"}</span>
-            <button
-              type="button"
-              onClick={() => { setRegisteringEvent(ev); setRegStatus("idle"); setRegErrorMessage(""); }}
-              className="px-3 py-1.5 bg-primary hover:bg-secondary text-on-primary rounded font-label-sm text-label-sm transition-colors cursor-pointer"
-            >
-              Başvur
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() =>
+              setCalendarMonth(new Date(calYear, calMonthIdx + 1, 1))
+            }
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-primary hover:bg-surface-ice cursor-pointer"
+          >
+            Sonraki Ay
+            <span className="material-symbols-outlined text-sm">chevron_right</span>
+          </button>
         </div>
-      ))}
-    </div>
-  ) : (
+
+        <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold uppercase text-slate-500 px-1">
+          {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map((d) => (
+            <div key={d} className="py-1.5">{d}</div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5">
+          {Array.from({ length: totalCells }, (_, idx) => {
+            const dayNum = idx - firstWeekday + 1;
+            const inMonth = dayNum >= 1 && dayNum <= daysInMonth;
+            const dayEvents = inMonth
+              ? monthEvents.filter((ev) => {
+                  const p = parseEventDateParts(ev.event_date);
+                  return p && p.day === dayNum;
+                })
+              : [];
+
+            return (
+              <div
+                key={idx}
+                className={`min-h-[96px] p-1.5 rounded-lg border text-left transition-colors ${
+                  inMonth
+                    ? "bg-white border-slate-200/80"
+                    : "bg-slate-50/60 border-slate-100 opacity-40"
+                }`}
+              >
+                {inMonth && (
+                  <>
+                    <div className="text-xs font-bold text-slate-700 mb-1 px-1">
+                      {dayNum}
+                    </div>
+                    <div className="space-y-1">
+                      {dayEvents.map((ev) => (
+                        <button
+                          key={ev.id}
+                          type="button"
+                          onClick={() => {
+                            setRegisteringEvent(ev);
+                            setRegStatus("idle");
+                            setRegErrorMessage("");
+                            setTicketResult(null);
+                          }}
+                          className="w-full text-left px-1.5 py-1 rounded bg-surface-ice hover:bg-primary hover:text-white text-primary text-[10px] font-semibold line-clamp-2 transition-colors cursor-pointer"
+                          title={`${ev.title} (${ev.event_time || ""})`}
+                        >
+                          {ev.title}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  })() : (
     agendaFilteredEvents.map((ev) => (
       <div key={ev.id} className="p-space-md rounded-lg bg-surface-container-low hover:bg-surface-ice transition-all flex flex-col md:flex-row md:items-center justify-between gap-space-md">
         <div className="flex items-start sm:items-center gap-space-md">
@@ -713,7 +877,7 @@ export default function EtkinliklerPage() {
 <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gold-deep/30 text-gold-light font-caption-caps text-caption-caps uppercase tracking-widest font-bold mb-space-sm">
 <span className="material-symbols-outlined text-base">military_tech</span>
-<span>Türkiye'nin En Prestijli Halkla İlişkiler Akreditasyonu</span>
+<span>Türkiye&apos;nin Öncü Halkla İlişkiler Ödülleri</span>
 </div>
 <h2 className="font-display-hero text-headline-xl lg:text-display-hero font-extrabold text-on-primary tracking-tight">
           2026 AHİD İletişim ve Halkla İlişkiler Başarı Ödülleri
@@ -772,7 +936,7 @@ export default function EtkinliklerPage() {
               Yılın Akademik Araştırma ve Literatür Ödülü
             </h3>
 <p className="font-body-sm text-body-sm text-on-primary-container mt-2">
-              Türkiye'de halkla ilişkiler disiplinine özgün katkı sağlayan hakemli makale, doktora tezi ya da araştırma kitapları.
+              Türkiye&apos;de halkla ilişkiler disiplinine özgün katkı sağlayan hakemli makale, doktora tezi ya da araştırma kitapları.
             </p>
 </div>
 <div className="pt-space-md mt-space-md flex items-center text-gold-light font-caption-caps text-caption-caps uppercase">
@@ -1006,16 +1170,25 @@ export default function EtkinliklerPage() {
       </button>
 
       {regStatus === "success" ? (
-        <div className="py-8 text-center flex flex-col items-center">
+        <div className="py-6 text-center flex flex-col items-center">
           <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4">
             <span className="material-symbols-outlined text-4xl">check_circle</span>
           </div>
           <h3 className="font-headline-sm font-bold text-primary">Kayıt Başarıyla Alındı!</h3>
           <p className="font-body-sm text-slate-muted mt-2 max-w-sm">
-            <strong>{registeringEvent.title}</strong> etkinliğine katılım kaydınız Supabase veritabanımıza kaydedilmiştir. Giriş detayları e-posta adresinize iletilecektir.
+            <strong>{registeringEvent.title}</strong> etkinliğine katılım kaydınız onaylanmıştır. Giriş sırasında aşağıdaki QR biletinizi kullanabilirsiniz.
           </p>
+          {ticketResult && (
+            <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center gap-2">
+              <img src={ticketResult.qrDataUrl} alt="Etkinlik QR Bilet" className="w-36 h-36 object-contain" />
+              <span className="font-mono text-xs font-bold text-primary">{ticketResult.ticketCode}</span>
+            </div>
+          )}
           <button
-            onClick={() => setRegisteringEvent(null)}
+            onClick={() => {
+              setRegisteringEvent(null);
+              setTicketResult(null);
+            }}
             className="mt-6 px-6 py-2.5 bg-primary text-white font-semibold rounded-lg shadow hover:bg-primary-container cursor-pointer"
             type="button"
           >
@@ -1046,7 +1219,7 @@ export default function EtkinliklerPage() {
               <label className="block text-xs font-semibold text-slate-700 mb-1">Katılımcı Adı ve Soyadı *</label>
               <input
                 type="text"
-                name="participant_name"
+                name="full_name"
                 required
                 placeholder="Adınız ve Soyadınız"
                 className="w-full px-3.5 py-2.5 rounded-lg bg-surface text-sm border border-slate-200 focus:outline-none focus:border-primary"
@@ -1057,7 +1230,7 @@ export default function EtkinliklerPage() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">E-Posta Adresi *</label>
                 <input
                   type="email"
-                  name="participant_email"
+                  name="email"
                   required
                   placeholder="ad.soyad@kurum.com"
                   className="w-full px-3.5 py-2.5 rounded-lg bg-surface text-sm border border-slate-200 focus:outline-none focus:border-primary"
@@ -1067,7 +1240,7 @@ export default function EtkinliklerPage() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Cep Telefonu *</label>
                 <input
                   type="tel"
-                  name="participant_phone"
+                  name="phone"
                   required
                   placeholder="+90 (5XX) XXX XX XX"
                   className="w-full px-3.5 py-2.5 rounded-lg bg-surface text-sm border border-slate-200 focus:outline-none focus:border-primary"
@@ -1088,7 +1261,7 @@ export default function EtkinliklerPage() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Unvan / Görev</label>
                 <input
                   type="text"
-                  name="position"
+                  name="title"
                   placeholder="Unvanınız"
                   className="w-full px-3.5 py-2.5 rounded-lg bg-surface text-sm border border-slate-200 focus:outline-none focus:border-primary"
                 />

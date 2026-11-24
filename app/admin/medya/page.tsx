@@ -42,6 +42,7 @@ export default function AdminMedyaPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const [uploadCategory, setUploadCategory] = useState("Genel Kurumsal");
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [savingInspector, setSavingInspector] = useState(false);
@@ -50,28 +51,28 @@ export default function AdminMedyaPage() {
   const [categoryDraft, setCategoryDraft] = useState("Genel Kurumsal");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const loadAssets = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/media");
-      const data = await res.json();
-      if (data.success && Array.isArray(data.assets)) {
-        setAssets(data.assets);
-        if (data.assets.length > 0 && !selectedAsset) {
-          setSelectedAsset(data.assets[0]);
-          setAltTextDraft(data.assets[0].alt_text || "");
-          setCategoryDraft(data.assets[0].category || "Genel Kurumsal");
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch media assets:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadAssets();
+    let active = true;
+    fetch("/api/media")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        if (data.success && Array.isArray(data.assets)) {
+          setAssets(data.assets);
+          if (data.assets.length > 0) {
+            setSelectedAsset(data.assets[0]);
+            setAltTextDraft(data.assets[0].alt_text || "");
+            setCategoryDraft(data.assets[0].category || "Genel Kurumsal");
+          }
+        }
+      })
+      .catch((err) => console.error("Failed to fetch media assets:", err))
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleSelectAsset = (asset: MediaAsset) => {
@@ -80,8 +81,7 @@ export default function AdminMedyaPage() {
     setCategoryDraft(asset.category || "Genel Kurumsal");
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  const uploadFiles = async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
     try {
@@ -107,6 +107,10 @@ export default function AdminMedyaPage() {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    await uploadFiles(e.target.files);
   };
 
   const handleSaveInspector = async () => {
@@ -403,11 +407,23 @@ export default function AdminMedyaPage() {
                         }`}
                       >
                         <div className="relative w-full aspect-video bg-[#e7eeff] overflow-hidden">
-                          <img
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            alt={asset.alt_text || asset.file_name}
-                            src={asset.file_url}
-                          />
+                          {asset.format?.toUpperCase() === "PDF" ||
+                          asset.file_url.toLowerCase().endsWith(".pdf") ? (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-[#f0f3ff] text-[#002869]">
+                              <span className="material-symbols-outlined text-4xl">
+                                picture_as_pdf
+                              </span>
+                              <span className="text-[11px] font-bold mt-1 uppercase">
+                                PDF Dokümanı
+                              </span>
+                            </div>
+                          ) : (
+                            <img
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              alt={asset.alt_text || asset.file_name}
+                              src={asset.file_url}
+                            />
+                          )}
                           <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
                             <span className="px-2 py-0.5 rounded-full bg-[#002869]/90 text-white text-[10px] font-bold">
                               {asset.aspect_ratio || "16:9"}
@@ -461,7 +477,7 @@ export default function AdminMedyaPage() {
                         Toplu Medya Yükleme Alanı (Supabase Storage)
                       </span>
                       <span className="text-xs text-[#64748b]">
-                        PNG, JPG, WebP, SVG, PDF • Maksimum 10 MB
+                        PNG, JPG, WebP, GIF, PDF • Maksimum 10 MB
                       </span>
                     </div>
                   </div>
@@ -469,7 +485,23 @@ export default function AdminMedyaPage() {
 
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center py-10 px-6 rounded-xl bg-[#f0f3ff] hover:bg-[#ebf2fc] border-2 border-dashed border-[#c4c6d3] transition-all cursor-pointer text-center group"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragActive(true);
+                  }}
+                  onDragLeave={() => setDragActive(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragActive(false);
+                    if (e.dataTransfer.files?.length) {
+                      void uploadFiles(e.dataTransfer.files);
+                    }
+                  }}
+                  className={`flex flex-col items-center justify-center py-10 px-6 rounded-xl border-2 border-dashed transition-all cursor-pointer text-center group ${
+                    dragActive
+                      ? "bg-[#dee8ff] border-[#002869]"
+                      : "bg-[#f0f3ff] hover:bg-[#ebf2fc] border-[#c4c6d3]"
+                  }`}
                 >
                   <div className="w-14 h-14 rounded-full bg-white group-hover:bg-[#002869] group-hover:text-white text-[#002869] transition-all flex items-center justify-center mb-3 shadow-xs">
                     <span className="material-symbols-outlined text-[28px]">
@@ -479,7 +511,7 @@ export default function AdminMedyaPage() {
                   <p className="text-sm text-[#101c2e] font-bold mb-1">
                     {uploading
                       ? "Dosyalar Supabase Storage'a yükleniyor..."
-                      : "Dosyaları seçmek için tıklayın"}
+                      : "Dosyaları buraya sürükleyip bırakın veya tıklayın"}
                   </p>
                   <p className="text-xs text-[#64748b] max-w-md">
                     Yüklenen görsel ve belgeler doğrudan Supabase medya
@@ -516,11 +548,31 @@ export default function AdminMedyaPage() {
                 ) : (
                   <>
                     <div className="relative w-full aspect-video bg-[#e7eeff] rounded-lg overflow-hidden">
-                      <img
-                        className="w-full h-full object-cover"
-                        alt={selectedAsset.alt_text || selectedAsset.file_name}
-                        src={selectedAsset.file_url}
-                      />
+                      {selectedAsset.format?.toUpperCase() === "PDF" ||
+                      selectedAsset.file_url.toLowerCase().endsWith(".pdf") ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-[#f0f3ff] text-[#002869]">
+                          <span className="material-symbols-outlined text-5xl">
+                            picture_as_pdf
+                          </span>
+                          <span className="text-xs font-bold mt-2">
+                            PDF Doküman Önizlemesi
+                          </span>
+                          <a
+                            href={selectedAsset.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 px-3 py-1 rounded bg-[#002869] text-white text-[11px] font-bold"
+                          >
+                            Yeni Sekmede Aç
+                          </a>
+                        </div>
+                      ) : (
+                        <img
+                          className="w-full h-full object-cover"
+                          alt={selectedAsset.alt_text || selectedAsset.file_name}
+                          src={selectedAsset.file_url}
+                        />
+                      )}
                     </div>
 
                     <div className="flex flex-col gap-2.5 bg-[#f0f3ff] p-3.5 rounded-lg text-xs">

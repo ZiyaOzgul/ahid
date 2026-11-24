@@ -20,6 +20,15 @@ interface ArticleItem {
   views_count?: number;
 }
 
+function escapeHtml(val?: string | null): string {
+  return String(val || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export default function AdminYazilarPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [articles, setArticles] = useState<ArticleItem[]>([]);
@@ -38,14 +47,6 @@ export default function AdminYazilarPage() {
   const [revisionNote, setRevisionNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Inspector Checklist State
-  const [checklist, setChecklist] = useState({
-    sourcesVerified: true,
-    plagiarismPassed: true,
-    ethicsApproved: true,
-    copyrightSigned: true,
-  });
 
   // New Article Form State
   const [newArticle, setNewArticle] = useState({
@@ -66,16 +67,14 @@ export default function AdminYazilarPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const loadArticles = async () => {
-    setLoading(true);
+  const loadArticles = async (withSpinner = false) => {
+    if (withSpinner) setLoading(true);
     try {
       const res = await fetch("/api/articles");
       const data = await res.json();
       if (data.success && Array.isArray(data.articles)) {
         setArticles(data.articles);
-        if (data.articles.length > 0 && !selectedArticle) {
-          setSelectedArticle(data.articles[0]);
-        }
+        setSelectedArticle((prev) => prev || data.articles[0] || null);
       }
     } catch (err) {
       console.error("Yazılar yüklenirken hata:", err);
@@ -85,7 +84,23 @@ export default function AdminYazilarPage() {
   };
 
   useEffect(() => {
-    loadArticles();
+    let active = true;
+    fetch("/api/articles")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        if (data.success && Array.isArray(data.articles)) {
+          setArticles(data.articles);
+          setSelectedArticle(data.articles[0] || null);
+        }
+      })
+      .catch((err) => console.error("Yazılar yüklenirken hata:", err))
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const resetArticleForm = () => {
@@ -239,10 +254,10 @@ export default function AdminYazilarPage() {
   };
 
   const handleCompileBulletin = () => {
-    const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>AHİD Yıllık Yayın Bülteni</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#101c2e}h1{color:#002869}article{border-bottom:1px solid #e2e8f0;padding:16px 0}</style></head><body><h1>AHİD — Ankara Halkla İlişkiler Derneği Yayın Bülteni</h1><p>Derleme Tarihi: ${new Date().toLocaleDateString("tr-TR")} • Toplam ${articles.length} Yayın</p>${articles
+    const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>AHİD Yıllık Yayın Bülteni</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#101c2e}h1{color:#002869}article{border-bottom:1px solid #e2e8f0;padding:16px 0}</style></head><body><h1>AHİD — Ankara Halkla İlişkiler Derneği Yayın Bülteni</h1><p>Derleme Tarihi: ${escapeHtml(new Date().toLocaleDateString("tr-TR"))} • Toplam ${articles.length} Yayın</p>${articles
       .map(
         (a) =>
-          `<article><h2>${a.title}</h2><p><strong>${a.author_name}</strong> (${a.category}) • ${a.published_at || "Güncel"}</p><p>${a.summary || ""}</p></article>`
+          `<article><h2>${escapeHtml(a.title)}</h2><p><strong>${escapeHtml(a.author_name)}</strong> (${escapeHtml(a.category)}) • ${escapeHtml(a.published_at || "Güncel")}</p><p>${escapeHtml(a.summary || "")}</p></article>`
       )
       .join("")}</body></html>`;
     const blob = new Blob([html], { type: "text/html;charset=utf-8;" });
@@ -681,73 +696,38 @@ export default function AdminYazilarPage() {
                     </div>
                   </div>
 
-                  {/* Editoryal Kontrol Listesi */}
-                  <div className="space-y-2 pt-2 border-t border-[#e2e8f0]">
-                    <span className="text-xs font-bold text-[#475569] uppercase tracking-wider">
-                      Yayın Öncesi Doğrulama
-                    </span>
-                    <div className="space-y-2 text-xs">
-                      <label className="flex items-center gap-2 cursor-pointer p-2 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
-                        <input
-                          type="checkbox"
-                          checked={checklist.sourcesVerified}
-                          onChange={(e) =>
-                            setChecklist({
-                              ...checklist,
-                              sourcesVerified: e.target.checked,
-                            })
-                          }
-                          className="rounded text-[#002869]"
-                        />
-                        <span>Kaynakça ve Referanslar Doğrulandı</span>
-                      </label>
-
-                      <label className="flex items-center gap-2 cursor-pointer p-2 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
-                        <input
-                          type="checkbox"
-                          checked={checklist.plagiarismPassed}
-                          onChange={(e) =>
-                            setChecklist({
-                              ...checklist,
-                              plagiarismPassed: e.target.checked,
-                            })
-                          }
-                          className="rounded text-[#002869]"
-                        />
-                        <span>İntihal Taraması Uygun (%2 Benzerlik)</span>
-                      </label>
-
-                      <label className="flex items-center gap-2 cursor-pointer p-2 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
-                        <input
-                          type="checkbox"
-                          checked={checklist.ethicsApproved}
-                          onChange={(e) =>
-                            setChecklist({
-                              ...checklist,
-                              ethicsApproved: e.target.checked,
-                            })
-                          }
-                          className="rounded text-[#002869]"
-                        />
-                        <span>Basın Ahlak ve İletişim Etiği Onayı</span>
-                      </label>
-
-                      <label className="flex items-center gap-2 cursor-pointer p-2 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
-                        <input
-                          type="checkbox"
-                          checked={checklist.copyrightSigned}
-                          onChange={(e) =>
-                            setChecklist({
-                              ...checklist,
-                              copyrightSigned: e.target.checked,
-                            })
-                          }
-                          className="rounded text-[#002869]"
-                        />
-                        <span>Telif Hakları ve Yayın Beyanı Alındı</span>
-                      </label>
-                    </div>
-                  </div>
+                  {/* Canlı Editoryal Metrikler */}
+                  {(() => {
+                    const bodyText = (selectedArticle.content || selectedArticle.summary || "").trim();
+                    const wordCount = bodyText ? bodyText.split(/\s+/).filter(Boolean).length : 0;
+                    const charCount = bodyText.length;
+                    const estMinutes = Math.max(1, Math.ceil(wordCount / 180));
+                    return (
+                      <div className="space-y-2 pt-2 border-t border-[#e2e8f0]">
+                        <span className="text-xs font-bold text-[#475569] uppercase tracking-wider">
+                          İçerik Analizi &amp; İstatistikler
+                        </span>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="p-2.5 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
+                            <span className="text-[10px] text-[#64748b] uppercase font-bold block">
+                              Kelime / Karakter
+                            </span>
+                            <span className="font-bold text-[#002869]">
+                              {wordCount} kelime • {charCount} krk
+                            </span>
+                          </div>
+                          <div className="p-2.5 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
+                            <span className="text-[10px] text-[#64748b] uppercase font-bold block">
+                              Tahmini Okuma / Okunma
+                            </span>
+                            <span className="font-bold text-[#002869]">
+                              {estMinutes} dk • {selectedArticle.views_count || 0} görüntüleme
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Görsel Önizleme */}
                   {selectedArticle.image_url && (

@@ -1,8 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+interface QuickSearchItem {
+  id: string;
+  type: string;
+  typeLabel: string;
+  title: string;
+  subtitle: string;
+  href: string;
+}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -10,7 +20,36 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<QuickSearchItem[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=8`);
+        if (res.ok && !cancelled) {
+          const data = (await res.json()) as { results?: QuickSearchItem[] };
+          setSearchResults(data.results || []);
+        }
+      } catch {
+        if (!cancelled) setSearchResults([]);
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    }, 240);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [searchQuery, searchOpen]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -35,6 +74,11 @@ export default function Navbar() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (searchResults.length > 0) {
+      router.push(searchResults[0].href);
+      setSearchOpen(false);
+      return;
+    }
     if (searchQuery.trim()) {
       router.push(`/yayinlar?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
@@ -123,8 +167,11 @@ export default function Navbar() {
         {/* Logo */}
         <div className="flex items-center shrink-0">
           <Link className="flex items-center group" href="/">
-            <img
+            <Image
               alt="AHİD - Ankara Halkla İlişkiler Derneği"
+              width={180}
+              height={48}
+              priority
               className={`w-auto object-contain transition-all duration-300 group-hover:scale-105 ${
                 scrolled ? "h-10" : "h-12"
               }`}
@@ -202,25 +249,68 @@ export default function Navbar() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="AHİD portali, etkinlikler, mevzuat veya köşe yazılarında arayın... (Enter)"
+              onChange={(e) => {
+                const next = e.target.value;
+                setSearchQuery(next);
+                if (next.trim().length < 2) {
+                  setSearchResults([]);
+                }
+              }}
+              placeholder="Haber, etkinlik, yayın, resmi belge veya kurul üyesi arayın..."
               className="w-full bg-white px-4 py-2 rounded-lg border border-[#c4c6d3] text-sm text-[#101c2e] focus:outline-none focus:ring-2 focus:ring-[#002869]"
               autoFocus
             />
             <button
               type="submit"
-              className="px-4 py-2 bg-[#002869] text-white rounded-lg text-xs font-semibold hover:bg-[#0b3d91] transition-colors"
+              className="px-4 py-2 bg-[#002869] text-white rounded-lg text-xs font-semibold hover:bg-[#0b3d91] transition-colors cursor-pointer"
             >
               Ara
             </button>
             <button
               type="button"
               onClick={() => setSearchOpen(false)}
-              className="text-xs font-semibold text-[#64748b] hover:text-[#002869] px-2 py-1"
+              className="text-xs font-semibold text-[#64748b] hover:text-[#002869] px-2 py-1 cursor-pointer"
             >
               Kapat
             </button>
           </form>
+
+          {searchQuery.trim().length >= 2 && (
+            <div className="max-w-4xl mx-auto mt-3 bg-white rounded-xl border border-[#d7e3fc] shadow-md overflow-hidden">
+              {searchLoading ? (
+                <div className="px-4 py-3 text-xs text-slate-500">
+                  Veritabanında aranıyor...
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="px-4 py-3 text-xs text-slate-500">
+                  &quot;{searchQuery}&quot; ile eşleşen içerik bulunamadı.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
+                  {searchResults.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      onClick={() => setSearchOpen(false)}
+                      className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-[#f4f7ff] transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#002869] truncate">
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-slate-500 truncate">
+                          {item.subtitle}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#e7eeff] text-[#002869]">
+                        {item.typeLabel}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

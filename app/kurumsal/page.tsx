@@ -4,10 +4,40 @@ import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import { normalizeBoardCategory } from "@/lib/constants";
+
+interface BoardMember {
+  id: number;
+  full_name: string;
+  title: string;
+  organization: string | null;
+  bio: string | null;
+  photo_url: string | null;
+  category: string;
+  order_no: number | null;
+}
+
+interface DocumentItem {
+  id: number;
+  title: string;
+  description: string | null;
+  category: string;
+  file_format: string;
+  file_size: string | null;
+  file_url: string | null;
+}
+
+function getInitials(name?: string | null): string {
+  if (!name) return "AH";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] || ""}${parts[parts.length - 1][0] || ""}`.toUpperCase();
+}
 
 export default function KurumsalPage() {
-  const [members, setMembers] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [members, setMembers] = useState<BoardMember[]>([]);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [liveStats, setLiveStats] = useState({ members: 0, articles: 0, documents: 0 });
   const [loading, setLoading] = useState(true);
   const [copiedMemberKey, setCopiedMemberKey] = useState<string | null>(null);
 
@@ -31,24 +61,45 @@ export default function KurumsalPage() {
     Promise.all([
       fetch("/api/board").then((res) => res.json()),
       fetch("/api/documents").then((res) => res.json()),
+      fetch("/api/cms?page=kurumsal").then((res) => res.json()).catch(() => ({})),
     ])
-      .then(([boardData, docsData]) => {
-        if (boardData?.success && boardData.members) {
+      .then(([boardData, docsData, cmsData]) => {
+        if (boardData?.success && Array.isArray(boardData.members)) {
           setMembers(boardData.members);
         }
-        if (docsData?.success && docsData.documents) {
+        if (docsData?.success && Array.isArray(docsData.documents)) {
           setDocuments(docsData.documents);
+        }
+        if (cmsData?.success && cmsData.liveStats) {
+          setLiveStats(cmsData.liveStats);
         }
       })
       .catch((err) => console.error("Error loading kurumsal data:", err))
       .finally(() => setLoading(false));
   }, []);
 
-  const isYonetim = (c: string) => c === "yonetim" || c === "yonetim_kurulu";
-  const president = members.find((m) => isYonetim(m.category) && m.order_no === 1);
-  const executiveMembers = members.filter((m) => isYonetim(m.category) && (!president || m.id !== president.id) && m.order_no !== 1);
-  const supervisoryMembers = members.filter((m) => m.category === "denetim" || m.category === "denetim_kurulu" || m.category === "danisma_kurulu");
-  const honoraryMembers = members.filter((m) => m.category === "gecmis_baskan" || m.category === "onur_kurulu");
+  const president =
+    members.find((m) => normalizeBoardCategory(m.category) === "donem_baskani") ||
+    members.find(
+      (m) =>
+        normalizeBoardCategory(m.category) === "yonetim_kurulu" &&
+        m.order_no === 1
+    );
+  const executiveMembers = members.filter(
+    (m) =>
+      normalizeBoardCategory(m.category) === "yonetim_kurulu" &&
+      (!president || m.id !== president.id)
+  );
+  const supervisoryMembers = members.filter(
+    (m) => normalizeBoardCategory(m.category) === "denetim_kurulu"
+  );
+  const advisoryAndHonoraryMembers = members.filter((m) => {
+    const cat = normalizeBoardCategory(m.category);
+    return cat === "yuksek_danisma" || cat === "gecmis_baskan";
+  });
+  const honoraryMembers = members.filter(
+    (m) => normalizeBoardCategory(m.category) === "gecmis_baskan"
+  );
 
   return (
     <>
@@ -82,7 +133,7 @@ export default function KurumsalPage() {
 <span className="text-gold-light">İletişim Mesleğinin</span> Öncü Gücü
           </h1>
 <p className="font-body-lg text-body-lg text-surface-container-high/90 max-w-3xl leading-relaxed mt-space-xs">
-            1990'dan günümüze başkent Ankara'da kamu diplomasisi, akademi ve kurumsal iletişim sektör standartlarını yükselten, etik ve saygın mesleki birlik.
+            1990&apos;dan günümüze başkent Ankara&apos;da kamu diplomasisi, akademi ve kurumsal iletişim sektör standartlarını yükselten, etik ve saygın mesleki birlik.
           </p>
 </div>
 {/*  Metric Pillar Badge  */}
@@ -138,14 +189,14 @@ export default function KurumsalPage() {
 <span className="font-caption-caps text-caption-caps text-tertiary-container font-bold uppercase tracking-widest">Kuruluş &amp; Misak</span>
 </div>
 <h2 className="font-headline-lg text-headline-lg text-primary font-bold leading-tight tracking-tight mb-space-md">
-              Ankara'nın Stratejik İletişim Aklı, Kamu ve Akademi Köprüsü
+              Ankara&apos;nın Stratejik İletişim Aklı, Kamu ve Akademi Köprüsü
             </h2>
 <div className="space-y-space-md font-body-md text-body-md text-slate-dark leading-relaxed">
 <p>
 <strong>1990 yılında başkentte kurulan Ankara Halkla İlişkiler Derneği (AHİD)</strong>, Cumhuriyetimizin iletişim vizyonunu kamu yönetimi, diplomasi bürokrasisi ve özel sektör ekseninde şekillendirmek üzere yola çıkmıştır.
               </p>
 <p>
-                Türkiye'de halkla ilişkiler eğitiminin beşiği sayılan <em>Ankara Üniversitesi İletişim Fakültesi (İLEF)</em> ve <em>Gazi/Hacı Bayram Veli Üniversitesi İletişim Fakültesi</em> gibi köklü kürsülerle el ele veren derneğimiz; teorik derinliği, bakanlıklar, savunma sanayii ve uluslararası temsilciliklerin iletişim operasyonlarıyla harmanlayan benzersiz bir ekosistem kurmuştur.
+                Türkiye&apos;de halkla ilişkiler eğitiminin beşiği sayılan <em>Ankara Üniversitesi İletişim Fakültesi (İLEF)</em> ve <em>Gazi/Hacı Bayram Veli Üniversitesi İletişim Fakültesi</em> gibi köklü kürsülerle el ele veren derneğimiz; teorik derinliği, bakanlıklar, savunma sanayii ve uluslararası temsilciliklerin iletişim operasyonlarıyla harmanlayan benzersiz bir ekosistem kurmuştur.
               </p>
 <p className="p-space-md bg-surface-container-low rounded-xl text-primary font-body-sm text-body-sm shadow-sm">
                 “İletişim, bir kurumun kamuoyuna verdiği taahhüttür. AHİD, başkentin çok sesli, etik ve bağımsız iletişim standartlarının 36 yıldır sarsılmaz teminatıdır.”
@@ -159,12 +210,12 @@ export default function KurumsalPage() {
 <div className="font-caption-caps text-caption-caps text-slate-muted uppercase">Yıllık Tecrübe</div>
 </div>
 <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm">
-<div className="font-headline-lg text-headline-lg font-bold text-tertiary-container">580+</div>
-<div className="font-caption-caps text-caption-caps text-slate-muted uppercase">Aktif Profesyonel</div>
+<div className="font-headline-lg text-headline-lg font-bold text-tertiary-container">{liveStats.members || members.length}</div>
+<div className="font-caption-caps text-caption-caps text-slate-muted uppercase">Kayıtlı Üye</div>
 </div>
 <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm">
-<div className="font-headline-lg text-headline-lg font-bold text-secondary">42</div>
-<div className="font-caption-caps text-caption-caps text-slate-muted uppercase">Akademik Yayın</div>
+<div className="font-headline-lg text-headline-lg font-bold text-secondary">{liveStats.articles + liveStats.documents}</div>
+<div className="font-caption-caps text-caption-caps text-slate-muted uppercase">Yayın &amp; Belge</div>
 </div>
 </div>
 </div>
@@ -184,7 +235,7 @@ export default function KurumsalPage() {
 </div>
 <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-1">Başkentte Mesleki Örgütlenme</h4>
 <p className="font-body-sm text-body-sm text-slate-muted">
-                Kamu kuruluşlarının basın müşavirleri ve Ankara'nın ilk bağımsız ajans kurucuları bir araya gelerek AHİD tüzel kişiliğini ilan etti.
+                Kamu kuruluşlarının basın müşavirleri ve Ankara&apos;nın ilk bağımsız ajans kurucuları bir araya gelerek AHİD tüzel kişiliğini ilan etti.
               </p>
 </div>
 {/*  Timeline Item 2  */}
@@ -247,7 +298,7 @@ export default function KurumsalPage() {
 <span className="font-caption-caps text-caption-caps uppercase tracking-wider text-gold-light">Temel Görevimiz</span>
 <h3 className="font-headline-md text-headline-md font-bold mt-1 mb-space-sm">Misyonumuz</h3>
 <p className="font-body-md text-body-md text-inverse-on-surface/90 leading-relaxed">
-              Başkent Ankara'nın kamu, yerel yönetim, akademi ve özel sektör dinamiklerini harmanlayarak; halkla ilişkiler mesleğinin stratejik itibarını güçlendirmek, kamuoyunu aydınlatma ahlakını savunmak ve üyelerimizin haklarını ulusal ölçekte temsil etmektir.
+              Başkent Ankara&apos;nın kamu, yerel yönetim, akademi ve özel sektör dinamiklerini harmanlayarak; halkla ilişkiler mesleğinin stratejik itibarını güçlendirmek, kamuoyunu aydınlatma ahlakını savunmak ve üyelerimizin haklarını ulusal ölçekte temsil etmektir.
             </p>
 </div>
 <div className="pt-space-md flex items-center gap-2 text-label-sm font-label-sm text-gold-light">
@@ -264,7 +315,7 @@ export default function KurumsalPage() {
 <span className="font-caption-caps text-caption-caps uppercase tracking-wider text-primary font-bold">Gelecek Ufkumuz</span>
 <h3 className="font-headline-md text-headline-md font-bold text-primary mt-1 mb-space-sm">Vizyonumuz</h3>
 <p className="font-body-md text-body-md text-slate-dark leading-relaxed">
-              Türkiye'de kurumsal iletişim ve halkla ilişkiler disiplininde Avrupa ve Avrasya standartlarında akredite bir meslek otoritesi olmak; dijital çağda dezenformasyona karşı güvenilir bilgi üretiminin öncüsü haline gelmektir.
+              Türkiye&apos;de kurumsal iletişim ve halkla ilişkiler disiplininde Avrupa ve Avrasya standartlarında akredite bir meslek otoritesi olmak; dijital çağda dezenformasyona karşı güvenilir bilgi üretiminin öncüsü haline gelmektir.
             </p>
 </div>
 <div className="pt-space-md flex items-center gap-2 text-label-sm font-label-sm text-primary">
@@ -297,7 +348,7 @@ export default function KurumsalPage() {
 <span className="material-symbols-outlined">handshake</span>
 </div>
 <h4 className="font-headline-sm text-headline-sm text-primary font-semibold mb-1">Sektörel Dayanışma</h4>
-<p className="font-body-sm text-body-sm text-slate-muted">Ankara'daki genç iletişimcilerden duayen yöneticilere kadar tüm üyelerimizi mesleki ağ ile kucaklarız.</p>
+<p className="font-body-sm text-body-sm text-slate-muted">Ankara&apos;daki genç iletişimcilerden duayen yöneticilere kadar tüm üyelerimizi mesleki ağ ile kucaklarız.</p>
 </div>
 {/*  Value 4  */}
 <div className="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm hover:shadow-md transition-shadow">
@@ -336,8 +387,15 @@ export default function KurumsalPage() {
   <div className="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden mb-space-xl">
     <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
       {/*  President Image Column  */}
-      <div className="lg:col-span-5 h-80 sm:h-96 lg:h-full min-h-[380px] relative overflow-hidden bg-surface-container">
-        <img className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500" alt={president.full_name} src={president.photo_url || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600"} />
+      <div className="lg:col-span-5 h-80 sm:h-96 lg:h-full min-h-[380px] relative overflow-hidden bg-surface-container flex items-center justify-center">
+        {president.photo_url ? (
+          <img className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500" alt={president.full_name} src={president.photo_url} />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary to-primary-container text-on-primary">
+            <span className="text-6xl font-bold tracking-wider">{getInitials(president.full_name)}</span>
+            <span className="text-xs uppercase tracking-widest mt-2 opacity-80">AHİD Dönem Başkanı</span>
+          </div>
+        )}
         <div className="absolute top-4 left-4">
           <span className="px-3 py-1 rounded-full bg-primary text-on-primary font-caption-caps text-caption-caps uppercase tracking-wider font-bold shadow-md">
             {president.title || "Yönetim Kurulu Başkanı"}
@@ -372,7 +430,7 @@ export default function KurumsalPage() {
           <div className="mt-space-md pt-space-md bg-surface-container-low p-space-md rounded-lg">
             <div className="font-caption-caps text-caption-caps text-primary font-bold uppercase tracking-wider mb-1">Başkanın Dönem Vizyon Mesajı</div>
             <p className="font-body-sm text-body-sm text-slate-dark italic">
-              “Başkent Ankara; yalnızca idari bir merkez değil, Türkiye'nin düşünce ve iletişim pusulasıdır. Yeni dönemde AHİD'i küresel standartlarda bir fikir ve meslek kürsüsüne dönüştürmekten onur duyuyoruz.”
+              “Başkent Ankara; yalnızca idari bir merkez değil, Türkiye&apos;nin düşünce ve iletişim pusulasıdır. Yeni dönemde AHİD&apos;i küresel standartlarda bir fikir ve meslek kürsüsüne dönüştürmekten onur duyuyoruz.”
             </p>
           </div>
         </div>
@@ -427,12 +485,18 @@ export default function KurumsalPage() {
     executiveMembers.map((member, idx) => (
       <div key={member.id || idx} className="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group">
         <div>
-          <div className="h-64 overflow-hidden relative bg-surface-container">
-            <img
-              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
-              alt={member.full_name}
-              src={member.photo_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"}
-            />
+          <div className="h-64 overflow-hidden relative bg-surface-container flex items-center justify-center">
+            {member.photo_url ? (
+              <img
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                alt={member.full_name}
+                src={member.photo_url}
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-surface-ice to-surface-container text-primary">
+                <span className="text-4xl font-bold tracking-wider">{getInitials(member.full_name)}</span>
+              </div>
+            )}
             <div className="absolute top-3 left-3">
               <span className="px-2.5 py-1 rounded bg-secondary-container/90 text-on-secondary-container font-caption-caps text-caption-caps font-bold">
                 {member.title}
@@ -526,12 +590,12 @@ export default function KurumsalPage() {
             Derneğin kurucu iradesini, duayen akademisyenleri ve geçmiş dönem başkanlarını barındıran; derneğe stratejik rota çizen istişare heyeti.
           </p>
 <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
-  {honoraryMembers.length === 0 ? (
+  {advisoryAndHonoraryMembers.length === 0 ? (
     <div className="col-span-full p-space-md rounded-lg bg-surface-container-low text-center text-slate-500 text-sm">
       Kayıtlı onur veya danışma kurulu üyesi bulunmamaktadır.
     </div>
   ) : (
-    honoraryMembers.map((m, idx) => (
+    advisoryAndHonoraryMembers.map((m, idx) => (
       <div key={m.id || idx} className="p-space-md rounded-lg bg-surface-container-low">
         <span className="font-caption-caps text-caption-caps text-gold-deep font-bold uppercase">{m.title}</span>
         <h4 className="font-headline-sm text-headline-sm text-primary font-bold mt-1">{m.full_name}</h4>
@@ -584,7 +648,7 @@ export default function KurumsalPage() {
         <div>
           <div className="flex items-center justify-between mb-space-sm">
             <span className="font-caption-caps text-caption-caps bg-error-container text-on-error-container px-2 py-0.5 rounded font-bold">
-              {doc.file_type || "PDF"} {doc.file_size ? `• ${doc.file_size}` : ""}
+              {doc.file_format || "PDF"} {doc.file_size ? `• ${doc.file_size}` : ""}
             </span>
             <span className="material-symbols-outlined text-slate-muted text-lg">download</span>
           </div>
@@ -631,7 +695,7 @@ export default function KurumsalPage() {
   <div className="bg-surface-container-low p-8 rounded-xl text-center border border-dashed border-slate-200 max-w-xl mx-auto">
     <span className="material-symbols-outlined text-3xl text-slate-400 mb-1">history</span>
     <p className="font-semibold text-primary">Henüz geçmiş dönem başkan veya onur kurulu kaydı bulunmuyor</p>
-    <p className="text-xs text-slate-500 mt-1">Veritabanına &quot;onur_kurulu&quot; kategorisinde üye eklendiğinde burada görüntülenecektir.</p>
+    <p className="text-xs text-slate-500 mt-1">Veritabanına &quot;gecmis_baskan&quot; kategorisinde üye eklendiğinde burada görüntülenecektir.</p>
   </div>
 ) : (
   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-space-md">
@@ -698,10 +762,10 @@ export default function KurumsalPage() {
 <div className="lg:col-span-8 flex flex-col gap-space-sm">
 <span className="font-caption-caps text-caption-caps uppercase tracking-wider text-gold-light font-bold">Mesleki Birlik ve Güç Birliği</span>
 <h2 className="font-headline-xl text-headline-xl text-on-primary font-bold tracking-tight">
-              Ankara'nın İletişim Vizyonuna Siz de Yön Verin
+              Ankara&apos;nın İletişim Vizyonuna Siz de Yön Verin
             </h2>
 <p className="font-body-lg text-body-lg text-surface-container-high/90 max-w-2xl leading-relaxed">
-              AHİD komisyonlarında görev alarak kamu diplomasisi, etik denetimi ve yapay zekâ stratejileri çalışma gruplarımıza dahil olabilir, Ankara'nın en saygın halkla ilişkiler ağına katılabilirsiniz.
+              AHİD komisyonlarında görev alarak kamu diplomasisi, etik denetimi ve yapay zekâ stratejileri çalışma gruplarımıza dahil olabilir, Ankara&apos;nın en saygın halkla ilişkiler ağına katılabilirsiniz.
             </p>
 </div>
 <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-space-sm lg:items-end justify-center">

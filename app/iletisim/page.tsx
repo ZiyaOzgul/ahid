@@ -1,16 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 
+const VALID_TOPICS = [
+  "Üyelik ve Akreditasyon",
+  "Etkinlik ve Zirve",
+  "Akademik Yayın",
+  "Basın Sözcülüğü",
+  "Mesleki Deontoloji",
+  "Diğer Kurumsal Konular",
+];
+
+function resolveInitialTopic(raw: string | null): string {
+  if (!raw) return "";
+  const lower = raw.toLowerCase();
+  if (lower.includes("makale") || lower.includes("yayin")) return "Akademik Yayın";
+  if (lower.includes("uyelik") || lower.includes("sicil")) return "Üyelik ve Akreditasyon";
+  if (lower.includes("etkinlik") || lower.includes("zirve")) return "Etkinlik ve Zirve";
+  if (lower.includes("basin")) return "Basın Sözcülüğü";
+  if (lower.includes("etik") || lower.includes("deontoloji")) return "Mesleki Deontoloji";
+  if (VALID_TOPICS.includes(raw)) return raw;
+  return "Diğer Kurumsal Konular";
+}
+
 export default function IletisimPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface" />}>
+      <IletisimContent />
+    </Suspense>
+  );
+}
+
+function IletisimContent() {
+  const searchParams = useSearchParams();
+  const initialTopic = resolveInitialTopic(searchParams.get("konu"));
+
   const [copied, setCopied] = useState(false);
-  const [mapZoom, setMapZoom] = useState(1);
-  const [mapMode, setMapMode] = useState<"map" | "satellite">("map");
+  const [selectedTopic, setSelectedTopic] = useState(initialTopic);
   const [contactStatus, setContactStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [contactError, setContactError] = useState("");
   const [protocolStatus, setProtocolStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [protocolError, setProtocolError] = useState("");
 
   const handleCopyCoord = () => {
     navigator.clipboard.writeText("39.9285, 32.8415");
@@ -21,6 +55,7 @@ export default function IletisimPage() {
   const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setContactStatus("loading");
+    setContactError("");
     const form = e.currentTarget;
     const formData = new FormData(form);
     const name = (formData.get("name") as string) || "";
@@ -44,22 +79,28 @@ export default function IletisimPage() {
         }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setContactStatus("success");
         form.reset();
+        setSelectedTopic("");
       } else {
         setContactStatus("error");
+        setContactError(data.error || "Mesaj gönderilemedi.");
       }
     } catch {
       setContactStatus("error");
+      setContactError("Sunucu bağlantısı kurulurken hata oluştu.");
     }
   };
 
   const handleProtocolSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setProtocolStatus("loading");
+    setProtocolError("");
     const form = e.currentTarget;
     const formData = new FormData(form);
+    const contactName = ((formData.get("contact_name") as string) || "").trim();
+    const contactEmail = ((formData.get("contact_email") as string) || "").trim();
     const department = (formData.get("department") as string) || "Yönetim Kurulu";
     const date = (formData.get("date") as string) || "";
     const time = (formData.get("time") as string) || "";
@@ -72,8 +113,8 @@ export default function IletisimPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: `Protokol Heyeti (${partySize} Kişi)`,
-          email: "protokol@ahid.org.tr",
+          name: `${contactName} (${partySize} Kişi)`,
+          email: contactEmail,
           phone,
           department,
           subject: `Protokol Randevusu: ${department} (${date} ${time})`,
@@ -82,14 +123,16 @@ export default function IletisimPage() {
         }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setProtocolStatus("success");
         form.reset();
       } else {
         setProtocolStatus("error");
+        setProtocolError(data.error || "Randevu talebi gönderilemedi.");
       }
     } catch {
       setProtocolStatus("error");
+      setProtocolError("Sunucu bağlantısı kurulurken hata oluştu.");
     }
   };
 
@@ -242,112 +285,37 @@ export default function IletisimPage() {
 </div>
 </div>
 <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter-desktop items-stretch">
-{/*  Main Map Visual Element (8 cols)  */}
+{/*  Main Real OpenStreetMap Embed (8 cols)  */}
 <div className="lg:col-span-8 flex flex-col bg-surface-container-lowest rounded-2xl shadow-md overflow-hidden relative min-h-[460px]">
-{/*  Interactive Map Surface Layer  */}
-<div className="relative w-full h-full min-h-[420px] bg-slate-100 flex items-center justify-center overflow-hidden">
-{/*  Simulated Map Canvas Graphic (Bespoke Editorial Cartography Vector)  */}
-<svg
-  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300"
-  style={{ transform: `scale(${mapZoom})` }}
-  fill="none"
-  viewBox="0 0 800 500"
-  xmlns="http://www.w3.org/2000/svg"
->
-<rect fill={mapMode === "satellite" ? "#1e293b" : "#EBF2FC"} height="500" width="800"></rect>
-{/*  Park / Green Areas (Anıtkabir Park Woods)  */}
-<path d="M 60 180 Q 120 140 220 180 T 320 280 Q 280 400 140 420 Z" fill={mapMode === "satellite" ? "#14532d" : "#D7E8DA"} opacity="0.8"></path>
-<text fill={mapMode === "satellite" ? "#bbf7d0" : "#3D6647"} fontFamily="Plus Jakarta Sans" fontSize="12" fontWeight="700" letterSpacing="2" opacity="0.75" x="180" y="270">ANITKABİR BARIŞ PARKI</text>
-<rect fill={mapMode === "satellite" ? "#166534" : "#C9DFC8"} height="55" opacity="0.6" rx="4" width="110" x="165" y="290"></rect>
-{/*  Main Arteries & Boulevards  */}
-<path d="M 0 110 L 800 110" stroke={mapMode === "satellite" ? "#334155" : "#CBD5E1"} strokeWidth="14"></path>
-<path d="M 0 110 L 800 110" stroke={mapMode === "satellite" ? "#475569" : "#FFFFFF"} strokeWidth="10"></path>
-<text fill={mapMode === "satellite" ? "#cbd5e1" : "#64748B"} fontFamily="Inter" fontSize="9" fontWeight="600" letterSpacing="1" x="440" y="104">GAZİ MUSTAFA KEMAL BULVARI (GMK)</text>
-{/*  Celal Bayar Bulvarı & YHT line  */}
-<path d="M 0 40 Q 400 60 800 30" stroke="#94A3B8" strokeDasharray="8 6" strokeWidth="8"></path>
-<text fill={mapMode === "satellite" ? "#e2e8f0" : "#475569"} fontFamily="Inter" fontSize="9" fontWeight="600" x="310" y="32">ANKARA YHT HIZLI TREN HATTI &amp; CELAL BAYAR BULVARI</text>
-{/*  Connecting Streets  */}
-<path d="M 360 40 L 360 500" stroke={mapMode === "satellite" ? "#334155" : "#E2E8F0"} strokeWidth="16"></path>
-<path d="M 360 40 L 360 500" stroke={mapMode === "satellite" ? "#475569" : "#FFFFFF"} strokeWidth="10"></path>
-<text fill={mapMode === "satellite" ? "#cbd5e1" : "#64748B"} fontFamily="Inter" fontSize="9" fontWeight="600" x="372" y="210">KÜLTÜR SOKAK</text>
-<path d="M 120 40 L 460 480" stroke={mapMode === "satellite" ? "#334155" : "#E2E8F0"} strokeWidth="10"></path>
-<path d="M 220 110 L 680 460" stroke={mapMode === "satellite" ? "#334155" : "#E2E8F0"} strokeWidth="8"></path>
-<path d="M 0 320 L 800 360" stroke={mapMode === "satellite" ? "#475569" : "#FFFFFF"} strokeWidth="10"></path>
-<text fill={mapMode === "satellite" ? "#cbd5e1" : "#64748B"} fontFamily="Inter" fontSize="9" fontWeight="600" x="560" y="348">GENÇLİK CADDESİ</text>
-<circle cx="580" cy="110" fill="#2563EB" opacity="0.2" r="14"></circle>
-<circle cx="580" cy="110" fill={mapMode === "satellite" ? "#60a5fa" : "#002869"} r="8"></circle>
-<text fill={mapMode === "satellite" ? "#f8fafc" : "#002869"} fontFamily="Inter" fontSize="10" fontWeight="700" x="540" y="85">Anadolu (Tandoğan) Metro</text>
-<rect fill={mapMode === "satellite" ? "#60a5fa" : "#002869"} height="24" rx="4" width="28" x="180" y="35"></rect>
-<text fill={mapMode === "satellite" ? "#f8fafc" : "#002869"} fontFamily="Inter" fontSize="10" fontWeight="700" x="215" y="52">Ankara YHT Garı</text>
-</svg>
-{/*  Custom Interactive AHİD Pin Overlay (Centered on Kültür Sokak)  */}
-<div className="absolute left-[44%] top-[42%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto group cursor-pointer">
-<span className="absolute w-14 h-14 rounded-full bg-primary/15"></span>
-{/*  Institutional Marker Body  */}
-<div className="relative z-10 flex items-center gap-2 bg-primary text-on-primary px-3.5 py-2 rounded-xl shadow-2xl transition-transform transform group-hover:scale-105">
-<span className="material-symbols-outlined text-gold-light text-xl">account_balance</span>
+<div className="relative w-full h-full min-h-[420px] bg-slate-100 overflow-hidden">
+<iframe
+  title="AHİD Genel Merkez Haritası — Anıttepe, Çankaya / Ankara"
+  className="w-full h-full min-h-[420px] border-0"
+  loading="lazy"
+  src="https://www.openstreetmap.org/export/embed.html?bbox=32.8315%2C39.9215%2C32.8515%2C39.9355&layer=mapnik&marker=39.9285%2C32.8415"
+/>
+<div className="absolute top-3 left-3 bg-surface-container-lowest/95 backdrop-blur-md px-3.5 py-2 rounded-xl shadow-md flex items-center gap-2 border border-slate-200/70">
+<span className="material-symbols-outlined text-primary text-lg">account_balance</span>
 <div className="flex flex-col text-left">
-<span className="font-headline-sm text-xs font-bold leading-none text-on-primary">AHİD GENEL MERKEZ</span>
-<span className="font-caption-caps text-[9px] text-surface-ice tracking-wider">Kültür Sk. No: 5/4</span>
+<span className="text-xs font-bold leading-none text-primary">AHİD GENEL MERKEZ</span>
+<span className="text-[10px] text-slate-600 mt-0.5">Kültür Sok. No: 5/4, Anıttepe / Çankaya</span>
 </div>
 </div>
-<div className="w-3 h-3 bg-primary rotate-45 -mt-1.5 shadow-md"></div>
-<div className="w-2.5 h-1 bg-black/40 rounded-full blur-[1px] mt-0.5"></div>
-</div>
-{/*  Landmark Overlay Card: Anadolu Metro  */}
-<div className="absolute right-8 top-16 bg-surface-container-lowest/95 backdrop-blur-md px-3 py-2 rounded shadow-sm text-on-surface text-label-sm font-label-sm hidden sm:flex items-center gap-2 pointer-events-none">
-<span className="w-2.5 h-2.5 rounded-full bg-secondary"></span>
-<span>Anadolu Metro Girişi: <strong>350 Metre (5 Dk)</strong></span>
-</div>
-{/*  Landmark Overlay Card: Ankara YHT Garı  */}
-<div className="absolute left-6 top-8 bg-surface-container-lowest/95 backdrop-blur-md px-3 py-2 rounded shadow-sm text-on-surface text-label-sm font-label-sm hidden sm:flex items-center gap-2 pointer-events-none">
-<span className="material-symbols-outlined text-base text-primary">train</span>
-<span>Yüksek Hızlı Tren Garı: <strong>1.2 Km (4 Dk Araç)</strong></span>
-</div>
-{/*  In-Map Floating Tools  */}
-<div className="absolute bottom-4 left-4 flex items-center gap-1.5 bg-surface-container-lowest/90 backdrop-blur-md p-1.5 rounded-lg shadow-sm">
-<button
-  type="button"
-  onClick={() => setMapZoom((z) => Math.min(1.6, Number((z + 0.15).toFixed(2))))}
-  className="w-8 h-8 rounded bg-surface hover:bg-surface-variant flex items-center justify-center text-primary font-bold text-sm cursor-pointer"
-  title="Yakınlaştır"
+<a
+  href="https://www.openstreetmap.org/?mlat=39.9285&mlon=32.8415#map=16/39.9285/32.8415"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="absolute bottom-3 right-3 bg-primary text-white hover:bg-primary-container px-3.5 py-2 rounded-lg shadow-md flex items-center gap-1.5 text-xs font-semibold transition-colors"
 >
-  +
-</button>
-<button
-  type="button"
-  onClick={() => setMapZoom((z) => Math.max(0.85, Number((z - 0.15).toFixed(2))))}
-  className="w-8 h-8 rounded bg-surface hover:bg-surface-variant flex items-center justify-center text-primary font-bold text-sm cursor-pointer"
-  title="Uzaklaştır"
->
-  -
-</button>
-<span className="w-[1px] h-4 bg-outline-variant mx-1"></span>
-<button
-  type="button"
-  onClick={() => setMapMode("satellite")}
-  className={`px-2.5 py-1 text-label-sm font-label-sm rounded cursor-pointer transition-colors ${mapMode === "satellite" ? "bg-primary text-on-primary font-medium" : "bg-surface text-on-surface hover:bg-surface-ice"}`}
->
-  Uydu
-</button>
-<button
-  type="button"
-  onClick={() => setMapMode("map")}
-  className={`px-2.5 py-1 text-label-sm font-label-sm rounded cursor-pointer transition-colors ${mapMode === "map" ? "bg-primary text-on-primary font-medium" : "bg-surface text-on-surface hover:bg-surface-ice"}`}
->
-  Harita
-</button>
-</div>
-<div className="absolute bottom-4 right-4 bg-surface-container-lowest/90 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-2 text-caption-caps font-caption-caps text-slate-muted">
-<span className="material-symbols-outlined text-sm text-secondary">explore</span>
-<span>Anıttepe &amp; Tandoğan Bölgesi • Çankaya</span>
-</div>
+<span className="material-symbols-outlined text-sm">open_in_new</span>
+<span>OpenStreetMap&apos;te Aç</span>
+</a>
 </div>
 {/*  Bottom Route Quick Bar  */}
 <div className="bg-surface-container px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 text-body-sm font-body-sm text-slate-dark">
 <div className="flex items-center gap-2">
 <span className="material-symbols-outlined text-primary text-lg">navigation</span>
-<span>Navigasyon Koordinatları: <strong>39°55'42.6"N 32°50'29.4"E</strong> (Anıttepe)</span>
+<span>Navigasyon Koordinatları: <strong>39°55&apos;42.6&quot;N 32°50&apos;29.4&quot;E</strong> (Anıttepe)</span>
 </div>
 <div className="flex items-center gap-4 text-label-sm font-label-sm">
 <a className="text-primary hover:underline font-semibold flex items-center gap-1" href="https://maps.apple.com/?ll=39.9285,32.8415" target="_blank">
@@ -369,7 +337,7 @@ export default function IletisimPage() {
 <h3 className="font-headline-sm text-headline-sm text-primary font-bold">Ulaşım Seçenekleri</h3>
 </div>
 <p className="font-body-sm text-body-sm text-slate-muted mb-6">
-              AHİD Genel Merkezi, Ankara'nın merkezi aktarma noktalarına ve bürokrasi aksına komşu konumdadır.
+              AHİD Genel Merkezi, Ankara&apos;nın merkezi aktarma noktalarına ve bürokrasi aksına komşu konumdadır.
             </p>
 {/*  Guide Items  */}
 <div className="flex flex-col gap-4">
@@ -381,7 +349,7 @@ export default function IletisimPage() {
 <div>
 <h4 className="font-label-md text-label-md text-on-surface font-bold">Metro &amp; Ankaray Hattı</h4>
 <p className="font-body-sm text-body-sm text-slate-muted leading-relaxed mt-0.5">
-<strong>Anadolu (Tandoğan) İstasyonu</strong> 1 No'lu Anıttepe çıkışından itibaren yalnızca 350 metre yürüme mesafesinde (5 dakika).
+<strong>Anadolu (Tandoğan) İstasyonu</strong> 1 No&apos;lu Anıttepe çıkışından itibaren yalnızca 350 metre yürüme mesafesinde (5 dakika).
                   </p>
 </div>
 </div>
@@ -393,7 +361,7 @@ export default function IletisimPage() {
 <div>
 <h4 className="font-label-md text-label-md text-on-surface font-bold">Yüksek Hızlı Tren (YHT)</h4>
 <p className="font-body-sm text-body-sm text-slate-muted leading-relaxed mt-0.5">
-<strong>Ankara YHT Garı'na</strong> araçla 4 dakika, Ankaray ile Tandoğan durağından 1 istasyon mesafededir. İstanbul ve Konya yolcuları için doğrudan erişim.
+<strong>Ankara YHT Garı&apos;na</strong> araçla 4 dakika, Ankaray ile Tandoğan durağından 1 istasyon mesafededir. İstanbul ve Konya yolcuları için doğrudan erişim.
                   </p>
 </div>
 </div>
@@ -495,7 +463,7 @@ export default function IletisimPage() {
             Akademik İlişkiler &amp; Yayın Kurulu
           </h3>
 <p className="font-body-sm text-body-sm text-slate-muted mt-2 leading-relaxed">
-            Hakemli bülten makale kabulü, "Usta'ya Saygı" arşivi monografi çalışmaları, üniversitelerin iletişim fakülteleri ile ortak sempozyumlar.
+            Hakemli bülten makale kabulü, &quot;Usta&apos;ya Saygı&quot; arşivi monografi çalışmaları, üniversitelerin iletişim fakülteleri ile ortak sempozyumlar.
           </p>
 <div className="mt-5 p-3 rounded bg-surface-canvas flex items-center gap-3">
 <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">
@@ -679,7 +647,7 @@ export default function IletisimPage() {
     <span className="material-symbols-outlined text-2xl text-red-600">error</span>
     <div>
       <h4 className="font-bold text-sm">Mesaj Gönderilemedi</h4>
-      <p className="text-xs text-red-700 mt-0.5">Lütfen bağlantınızı kontrol edip tekrar deneyiniz veya santralimizle iletişime geçiniz.</p>
+      <p className="text-xs text-red-700 mt-0.5">{contactError || "Lütfen bağlantınızı kontrol edip tekrar deneyiniz veya santralimizle iletişime geçiniz."}</p>
     </div>
   </div>
 )}
@@ -707,7 +675,13 @@ export default function IletisimPage() {
 </div>
 <div>
 <label className="block font-label-sm text-label-sm text-slate-dark mb-1.5">Başvuru Konusu / İlgili İhtisas Alanı *</label>
-<select className="w-full px-4 py-3 rounded-lg bg-surface font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary" name="topic" required>
+<select
+  className="w-full px-4 py-3 rounded-lg bg-surface font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary"
+  name="topic"
+  value={selectedTopic}
+  onChange={(e) => setSelectedTopic(e.target.value)}
+  required
+>
 <option value="">Seçiniz...</option>
 <option value="Üyelik ve Akreditasyon">Üyelik, Sicil &amp; CPD Akreditasyonu</option>
 <option value="Etkinlik ve Zirve">Etkinlikler, Zirve Katılımı &amp; Sponsorluk</option>
@@ -754,7 +728,7 @@ export default function IletisimPage() {
     <span className="material-symbols-outlined text-2xl text-gold-light">task_alt</span>
     <div>
       <h4 className="font-bold text-sm">Randevu Talebiniz Alındı!</h4>
-      <p className="text-xs text-surface-ice/90 mt-0.5">Genel Sekreterlik Özel Kalemine sevk edilmiştir. SMS ve telefon ile teyit verilecektir.</p>
+      <p className="text-xs text-surface-ice/90 mt-0.5">Genel Sekreterlik Özel Kalemine sevk edilmiştir. E-posta ve telefon ile teyit verilecektir.</p>
     </div>
   </div>
 )}
@@ -764,12 +738,22 @@ export default function IletisimPage() {
     <span className="material-symbols-outlined text-2xl text-red-300">error</span>
     <div>
       <h4 className="font-bold text-sm">Randevu Kaydedilemedi</h4>
-      <p className="text-xs text-red-200 mt-0.5">Lütfen doğrudan sekreterya dahili hattımızı arayınız.</p>
+      <p className="text-xs text-red-200 mt-0.5">{protocolError || "Lütfen doğrudan sekreterya dahili hattımızı arayınız."}</p>
     </div>
   </div>
 )}
 
 <form className="space-y-4" onSubmit={handleProtocolSubmit}>
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div>
+<label className="block font-label-sm text-label-sm text-gold-light mb-1">İrtibat Yetkilisi Adı Soyadı *</label>
+<input className="w-full px-3.5 py-2.5 rounded bg-white/10 text-on-primary placeholder:text-white/50 text-body-sm font-body-sm border border-white/20 focus:outline-none focus:bg-white/20" name="contact_name" placeholder="Adınız Soyadınız" required type="text" />
+</div>
+<div>
+<label className="block font-label-sm text-label-sm text-gold-light mb-1">Kurumsal E-posta *</label>
+<input className="w-full px-3.5 py-2.5 rounded bg-white/10 text-on-primary placeholder:text-white/50 text-body-sm font-body-sm border border-white/20 focus:outline-none focus:bg-white/20" name="contact_email" placeholder="yetkili@kurum.gov.tr" required type="email" />
+</div>
+</div>
 <div>
 <label className="block font-label-sm text-label-sm text-gold-light mb-1">Görüşülmek İstenen Makam / Kurul *</label>
 <select className="w-full px-3.5 py-2.5 rounded bg-white/10 text-on-primary text-body-sm font-body-sm border border-white/20 focus:outline-none focus:bg-white/20" name="department" required>
@@ -868,10 +852,10 @@ export default function IletisimPage() {
 <div className="w-8 h-8 rounded bg-surface-ice text-primary flex items-center justify-center">
 <span className="material-symbols-outlined text-lg">security</span>
 </div>
-<h3 className="font-headline-sm text-sm font-bold text-primary">KEP (Kayıtlı Elektronik Posta) Tebliği</h3>
+<h3 className="font-headline-sm text-sm font-bold text-primary">Kurumsal Evrak &amp; E-Posta Yazışması</h3>
 </div>
 <p className="font-body-sm text-body-sm text-slate-muted leading-relaxed">
-            Tebligat Kanunu kapsamında resmi bildirimler ve hukuki yazışmalar doğrudan <strong className="text-primary font-mono text-xs">ahid@hs01.kep.tr</strong> adresine iletilmelidir.
+            Resmi yazışmalar ve kurumsal bildirimler <strong className="text-primary font-mono text-xs">info@ahid.org.tr</strong> e-posta adresi veya Genel Merkez evrak kabul masası üzerinden kabul edilmektedir.
           </p>
 </div>
 </div>
@@ -902,7 +886,7 @@ export default function IletisimPage() {
 <span className="material-symbols-outlined text-primary group-open:rotate-180 transition-transform">expand_more</span>
 </summary>
 <div className="mt-3 pt-3 border-t border-surface-container font-body-sm text-body-sm text-slate-muted leading-relaxed">
-            Evet, AHİD Basın ve Halkla İlişkiler İhtisas Kütüphanesi; Ankara'daki tüm iletişim fakültesi lisans, yüksek lisans ve doktora öğrencilerine açıktır. Öğrenci kimliği ibraz edilerek Salı ve Perşembe günleri 10:00 - 16:00 saatleri arasında kaynaklardan faydalanılabilir.
+            Evet, AHİD Basın ve Halkla İlişkiler İhtisas Kütüphanesi; Ankara&apos;daki tüm iletişim fakültesi lisans, yüksek lisans ve doktora öğrencilerine açıktır. Öğrenci kimliği ibraz edilerek Salı ve Perşembe günleri 10:00 - 16:00 saatleri arasında kaynaklardan faydalanılabilir.
           </div>
 </details>
 {/*  FAQ Item 3  */}
@@ -928,7 +912,7 @@ export default function IletisimPage() {
 {/*  FAQ Item 5  */}
 <details className="bg-surface-container-lowest p-5 rounded-xl shadow-sm group [&amp;[open]]:shadow-md transition-all">
 <summary className="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between cursor-pointer list-none">
-<span>Usta'ya Saygı röportaj serisi için kaynak ve fiziksel arşiv incelemesi nasıl talep edilir?</span>
+<span>Usta&apos;ya Saygı röportaj serisi için kaynak ve fiziksel arşiv incelemesi nasıl talep edilir?</span>
 <span className="material-symbols-outlined text-primary group-open:rotate-180 transition-transform">expand_more</span>
 </summary>
 <div className="mt-3 pt-3 border-t border-surface-container font-body-sm text-body-sm text-slate-muted leading-relaxed">

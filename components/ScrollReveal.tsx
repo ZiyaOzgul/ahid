@@ -36,7 +36,7 @@ export default function ScrollReveal() {
             duration: 380,
             delay: delayMs,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-            fill: "both",
+            fill: "none",
           }
         );
       } catch {

@@ -45,10 +45,10 @@ export default function AdminHeader({
 
   const adminRoutes = [
     { label: "Genel Bakış & CMS Editörü", href: "/admin", keywords: "genel bakış cms ana sayfa hero zirve yönetim kurulu duyuru belge" },
-    { label: "Üyelik, Başvurular & Aidatlar", href: "/admin/uyelik", keywords: "üye üyelik başvuru derbis aidat sicil" },
+    { label: "Üyelik, Başvurular & Aidatlar", href: "/admin/uyelik", keywords: "üye üyelik başvuru aidat sicil" },
     { label: "Etkinlik & Zirve Yönetimi", href: "/admin/etkinlikler", keywords: "etkinlik zirve çalıştay ödül katılım kayıt" },
     { label: "Yayınlar, Köşe Yazıları & Arşiv", href: "/admin/yazilar", keywords: "yazı yayın makale köşe bülten usta saygı" },
-    { label: "Protokol, KEP & Randevu", href: "/admin/protokol", keywords: "protokol kep randevu basın diplomatik mesaj" },
+    { label: "Protokol, İletişim & Randevu", href: "/admin/protokol", keywords: "protokol randevu basın iletişim mesaj" },
     { label: "Medya Kütüphanesi & Görseller", href: "/admin/medya", keywords: "medya görsel fotoğraf afiş logo dosya" },
     { label: "Sistem Ayarları & Yetkilendirme", href: "/admin/sistem", keywords: "sistem ayar yetki kullanıcı rbac güvenlik kvkk" },
   ];
@@ -66,29 +66,57 @@ export default function AdminHeader({
   const getReadIds = (): string[] => {
     try {
       const saved = localStorage.getItem("ahid_read_notifications");
-      return saved ? JSON.parse(saved) : [];
+      return saved ? (JSON.parse(saved) as string[]) : [];
     } catch {
       return [];
     }
   };
 
+  interface RawNotification {
+    id: string;
+    title: string;
+    message?: string;
+    description?: string;
+    time?: string;
+    created_at?: string;
+    link?: string;
+    href?: string;
+    type: string;
+    unread?: boolean;
+    read?: boolean;
+  }
+
+  const normalizeNotificationItems = (rawItems: RawNotification[]): NotificationItem[] => {
+    const readIds = getReadIds();
+    return rawItems.map((n) => ({
+      id: n.id,
+      title: n.title,
+      message: n.description || n.message || "",
+      time:
+        n.time ||
+        (n.created_at
+          ? new Date(n.created_at).toLocaleDateString("tr-TR")
+          : ""),
+      link: n.href || n.link || "/admin",
+      type: n.type,
+      unread:
+        (n.read !== undefined ? !n.read : n.unread !== false) &&
+        !readIds.includes(n.id),
+    }));
+  };
+
   const fetchNotifications = async () => {
     try {
       const res = await fetch("/api/notifications");
-      const data = await res.json();
-      if (data.success) {
-        const readIds = getReadIds();
-        const items: NotificationItem[] = (data.notifications || []).map(
-          (n: NotificationItem) => ({
-            ...n,
-            unread: n.unread !== false && !readIds.includes(n.id),
-          })
-        );
+      if (!res.ok) return;
+      const data = (await res.json()) as { notifications?: RawNotification[] };
+      if (Array.isArray(data.notifications)) {
+        const items = normalizeNotificationItems(data.notifications);
         setNotifications(items);
         setUnreadCount(items.filter((i) => i.unread).length);
       }
-    } catch (err) {
-      console.error("Notifications fetch error:", err);
+    } catch {
+      // Ignore transient network failures in header polling
     }
   };
 
@@ -100,9 +128,13 @@ export default function AdminHeader({
       localStorage.setItem("ahid_read_notifications", JSON.stringify(merged));
       setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
       setUnreadCount(0);
-      await fetch("/api/notifications", { method: "PATCH" });
-    } catch (e) {
-      console.error(e);
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: allIds }),
+      });
+    } catch {
+      // Non-fatal
     }
   };
 
@@ -127,46 +159,80 @@ export default function AdminHeader({
   };
 
   useEffect(() => {
-    fetchNotifications();
+    let cancelled = false;
 
-    const syncSession = async () => {
+    const loadInitial = async () => {
       try {
-        const saved = localStorage.getItem("ahid_auth");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed.email) {
+        const [notifRes, sessRes] = await Promise.all([
+          fetch("/api/notifications"),
+          fetch("/api/auth/session"),
+        ]);
+
+        if (!cancelled && notifRes.ok) {
+          const data = (await notifRes.json()) as {
+            notifications?: RawNotification[];
+          };
+          if (Array.isArray(data.notifications)) {
+            const readIds = (() => {
+              try {
+                const s = localStorage.getItem("ahid_read_notifications");
+                return s ? (JSON.parse(s) as string[]) : [];
+              } catch {
+                return [] as string[];
+              }
+            })();
+            const items: NotificationItem[] = data.notifications.map((n) => ({
+              id: n.id,
+              title: n.title,
+              message: n.description || n.message || "",
+              time:
+                n.time ||
+                (n.created_at
+                  ? new Date(n.created_at).toLocaleDateString("tr-TR")
+                  : ""),
+              link: n.href || n.link || "/admin",
+              type: n.type,
+              unread:
+                (n.read !== undefined ? !n.read : n.unread !== false) &&
+                !readIds.includes(n.id),
+            }));
+            setNotifications(items);
+            setUnreadCount(items.filter((i) => i.unread).length);
+          }
+        }
+
+        if (!cancelled && sessRes.ok) {
+          const sessData = (await sessRes.json()) as {
+            authenticated?: boolean;
+            user?: { full_name?: string; email: string; role: string };
+          };
+          if (sessData.authenticated && sessData.user) {
             setCurrentUser({
-              name: parsed.full_name || parsed.email.split("@")[0],
-              email: parsed.email,
-              role: parsed.role === "admin" ? "Sistem Yöneticisi" : "Editör",
+              name:
+                sessData.user.full_name || sessData.user.email.split("@")[0],
+              email: sessData.user.email,
+              role:
+                sessData.user.role === "admin"
+                  ? "Süper Yönetici"
+                  : "Editör",
             });
           }
         }
-      } catch {}
-
-      try {
-        const res = await fetch("/api/auth/session");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated && data.user) {
-            setCurrentUser({
-              name: data.user.full_name || data.user.email.split("@")[0],
-              email: data.user.email,
-              role: data.user.role === "admin" ? "Sistem Yöneticisi" : "Editör",
-            });
-            try {
-              localStorage.setItem("ahid_auth", JSON.stringify(data.user));
-            } catch {}
-          }
-        }
-      } catch {}
+      } catch {
+        // Ignore transient network errors
+      }
     };
 
-    syncSession();
+    void loadInitial();
 
-    // Auto-refresh notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    const interval = window.setInterval(() => {
+      void loadInitial();
+    }, 30000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, []);
 
   // Close dropdowns on outside click
@@ -291,7 +357,7 @@ export default function AdminHeader({
         <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-[#ebf2fc] text-[#002869]">
           <span className="w-2 h-2 rounded-full bg-[#225aba]" />
           <span className="text-[11px] font-bold tracking-wide uppercase">
-            DERBİS &amp; KEP ENTEGRE
+            CANLI VERİTABANI AKTİF
           </span>
         </div>
 
@@ -388,7 +454,7 @@ export default function AdminHeader({
                         className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                           item.type === "application"
                             ? "bg-blue-100 text-blue-700"
-                            : item.type === "contact"
+                            : item.type === "protocol" || item.type === "message" || item.type === "contact"
                             ? "bg-purple-100 text-purple-700"
                             : "bg-amber-100 text-amber-700"
                         }`}
@@ -396,8 +462,10 @@ export default function AdminHeader({
                         <span className="material-symbols-outlined text-[18px]">
                           {item.type === "application"
                             ? "badge"
-                            : item.type === "contact"
+                            : item.type === "protocol" || item.type === "message" || item.type === "contact"
                             ? "mail"
+                            : item.type === "dues"
+                            ? "receipt_long"
                             : "article"}
                         </span>
                       </div>

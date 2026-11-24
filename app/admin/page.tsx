@@ -2,21 +2,99 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import {
+  BOARD_CATEGORIES,
+  BOARD_CATEGORY_LABELS,
+  DOCUMENT_CATEGORIES,
+  NEWS_CATEGORIES,
+  normalizeBoardCategory,
+  parseApplicationMeta,
+} from "@/lib/constants";
+
+interface ApplicationRow {
+  id: number;
+  application_no?: string | null;
+  first_name: string;
+  last_name: string;
+  tier?: string | null;
+  organization?: string | null;
+  position?: string | null;
+  email: string;
+  phone?: string | null;
+  city?: string | null;
+  status: string;
+  admin_notes?: string | null;
+}
+
+interface ContactMessageRow {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  message: string;
+  type?: string | null;
+}
+
+interface BoardMemberRow {
+  id: number;
+  full_name: string;
+  title: string;
+  organization?: string | null;
+  category: string;
+  term_period?: string | null;
+  term_label?: string | null;
+  bio?: string | null;
+  photo_url?: string | null;
+  order_no: number | null;
+}
+
+interface NewsItemRow {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  bulletin_no?: string | null;
+  summary?: string | null;
+  content?: string | null;
+  image_url?: string | null;
+  is_featured?: boolean | null;
+  is_member_only?: boolean | null;
+  published_at?: string | null;
+}
+
+interface DocumentRow {
+  id: number;
+  title: string;
+  category: string;
+  document_code?: string | null;
+  description?: string | null;
+  file_url?: string | null;
+  file_format?: string | null;
+  file_size?: string | null;
+}
+
+interface MediaAssetRow {
+  file_url: string;
+  file_name: string;
+}
 
 export default function AdminPage() {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
-  const [applications, setApplications] = useState<any[]>([]);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [applications, setApplications] = useState<ApplicationRow[]>([]);
+  const [messages, setMessages] = useState<ContactMessageRow[]>([]);
   const [articlesCount, setArticlesCount] = useState<number>(0);
   const [eventsCount, setEventsCount] = useState<number>(0);
   const [mediaAssetsCount, setMediaAssetsCount] = useState<number>(0);
-  const [boardMembers, setBoardMembers] = useState<any[]>([]);
-  const [newsList, setNewsList] = useState<any[]>([]);
-  const [docsList, setDocsList] = useState<any[]>([]);
+  const [boardMembers, setBoardMembers] = useState<BoardMemberRow[]>([]);
+  const [newsList, setNewsList] = useState<NewsItemRow[]>([]);
+  const [docsList, setDocsList] = useState<DocumentRow[]>([]);
   const [showAddBoard, setShowAddBoard] = useState(false);
+  const [editingBoardId, setEditingBoardId] = useState<number | null>(null);
   const [newBoardMember, setNewBoardMember] = useState({
     full_name: "",
     title: "",
@@ -28,26 +106,28 @@ export default function AdminPage() {
     photo_url: "",
     order_no: 1,
   });
+  const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
   const [newNews, setNewNews] = useState({
     title: "",
-    category: "Kurumsal Haberler",
+    category: NEWS_CATEGORIES[0],
+    bulletin_no: "",
     summary: "",
     content: "",
-    protocol_code: "",
-    featured_image_url: "",
-    is_headline: false,
-    is_urgent: false,
+    image_url: "",
+    is_featured: false,
+    is_member_only: false,
   });
   const [newDoc, setNewDoc] = useState({
     title: "",
-    category: "Dernek Tüzüğü & Yönetmelikler",
+    category: DOCUMENT_CATEGORIES[0].id,
     document_code: "",
     description: "",
     file_url: "",
-    file_type: "PDF",
-    file_size: "1.2 MB",
-    page_count: 12,
+    file_format: "PDF",
+    file_size: "",
   });
+  const [uploadingDocFile, setUploadingDocFile] = useState(false);
+  const [heroDragActive, setHeroDragActive] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toastText, setToastText] = useState("Tüm CMS değişkenleri veritabanına kaydedildi!");
   const [lastSavedAt, setLastSavedAt] = useState<string>("Canlı Veritabanı");
@@ -197,7 +277,9 @@ export default function AdminPage() {
         if (data.success && data.assets) {
           setMediaAssetsCount(data.assets.length);
           setUploadedMedia(
-            data.assets.slice(0, 6).map((a: any) => ({ url: a.file_url, name: a.file_name }))
+            (data.assets as MediaAssetRow[])
+              .slice(0, 6)
+              .map((a) => ({ url: a.file_url, name: a.file_name }))
           );
         }
       })
@@ -219,30 +301,65 @@ export default function AdminPage() {
       .catch((err) => console.error(err));
   }, []);
 
+  const resetBoardForm = () => {
+    setEditingBoardId(null);
+    setNewBoardMember({
+      full_name: "",
+      title: "",
+      organization: "",
+      category: "yonetim_kurulu",
+      term_period: "2024 — 2026",
+      term_label: "",
+      bio: "",
+      photo_url: "",
+      order_no: 1,
+    });
+  };
+
+  const handleStartEditBoardMember = (member: BoardMemberRow) => {
+    setEditingBoardId(member.id);
+    setNewBoardMember({
+      full_name: member.full_name,
+      title: member.title,
+      organization: member.organization || "",
+      category: normalizeBoardCategory(member.category),
+      term_period: member.term_period || "2024 — 2026",
+      term_label: member.term_label || "",
+      bio: member.bio || "",
+      photo_url: member.photo_url || "",
+      order_no: member.order_no ?? 1,
+    });
+    setShowAddBoard(true);
+  };
+
   const handleAddBoardMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBoardMember.full_name || !newBoardMember.title) return;
     try {
+      const isEdit = Boolean(editingBoardId);
       const res = await fetch("/api/board", {
-        method: "POST",
+        method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newBoardMember),
+        body: JSON.stringify(
+          isEdit ? { id: editingBoardId, ...newBoardMember } : newBoardMember
+        ),
       });
       const data = await res.json();
       if (data.success && data.member) {
-        setBoardMembers((prev) => [...prev, data.member]);
+        const updated = data.member as BoardMemberRow;
+        if (isEdit) {
+          setBoardMembers((prev) =>
+            prev.map((m) => (m.id === updated.id ? updated : m))
+          );
+          showToast("Kurul üyesi bilgileri güncellendi.");
+        } else {
+          setBoardMembers((prev) => [...prev, updated]);
+          showToast("Yeni kurul üyesi veritabanına eklendi.");
+        }
         setShowAddBoard(false);
-        setNewBoardMember({
-          full_name: "",
-          title: "",
-          organization: "",
-          category: "yonetim_kurulu",
-          term_period: "2024 — 2026",
-          term_label: "",
-          bio: "",
-          photo_url: "",
-          order_no: 1,
-        });
+        resetBoardForm();
+      } else {
+        showToast(data.error || "Kurul üyesi kaydedilemedi.");
       }
     } catch (err) {
       console.error(err);
@@ -255,37 +372,109 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success) {
         setBoardMembers((prev) => prev.filter((m) => m.id !== id));
+        showToast("Kurul üyesi kaydı silindi.");
       }
     } catch (err) {
       console.error(err);
     }
   };
 
+  const resetNewsForm = () => {
+    setEditingNewsId(null);
+    setNewNews({
+      title: "",
+      category: NEWS_CATEGORIES[0],
+      bulletin_no: "",
+      summary: "",
+      content: "",
+      image_url: "",
+      is_featured: false,
+      is_member_only: false,
+    });
+  };
+
+  const handleStartEditNews = (item: NewsItemRow) => {
+    setEditingNewsId(item.id);
+    setNewNews({
+      title: item.title,
+      category: item.category || NEWS_CATEGORIES[0],
+      bulletin_no: item.bulletin_no || "",
+      summary: item.summary || "",
+      content: item.content || "",
+      image_url: item.image_url || "",
+      is_featured: Boolean(item.is_featured),
+      is_member_only: Boolean(item.is_member_only),
+    });
+  };
+
   const handleCreateNews = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNews.title) return;
     try {
+      const isEdit = Boolean(editingNewsId);
       const res = await fetch("/api/news", {
-        method: "POST",
+        method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newNews),
+        body: JSON.stringify(isEdit ? { id: editingNewsId, ...newNews } : newNews),
       });
       const data = await res.json();
       if (data.success && data.item) {
-        setNewsList((prev) => [data.item, ...prev]);
-        setNewNews({
-          title: "",
-          category: "Kurumsal Haberler",
-          summary: "",
-          content: "",
-          protocol_code: "",
-          featured_image_url: "",
-          is_headline: false,
-          is_urgent: false,
-        });
+        const saved = data.item as NewsItemRow;
+        if (isEdit) {
+          setNewsList((prev) => prev.map((n) => (n.id === saved.id ? saved : n)));
+          showToast("Haber/duyuru kaydı güncellendi.");
+        } else {
+          setNewsList((prev) => [saved, ...prev]);
+          showToast("Yeni haber/duyuru yayınlandı.");
+        }
+        resetNewsForm();
+      } else {
+        showToast(data.error || "Haber kaydedilemedi.");
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleDeleteNews = async (id: number) => {
+    try {
+      const res = await fetch(`/api/news?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setNewsList((prev) => prev.filter((n) => n.id !== id));
+        showToast("Haber kaydı silindi.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDocFileUpload = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadingDocFile(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("bucket", "documents");
+      fd.append("category", "Resmi Doküman");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (res.ok && data.success && data.url) {
+        const ext = file.name.split(".").pop()?.toUpperCase() || "PDF";
+        setNewDoc((prev) => ({
+          ...prev,
+          file_url: data.url,
+          file_format: ext,
+          file_size: data.meta?.fileSize || prev.file_size,
+        }));
+        showToast("Doküman dosyası Supabase Storage'a yüklendi.");
+      } else {
+        showToast(data.error || "Doküman dosyası yüklenemedi.");
+      }
+    } catch {
+      showToast("Doküman yükleme bağlantısı kurulamadı.");
+    } finally {
+      setUploadingDocFile(false);
     }
   };
 
@@ -300,17 +489,32 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success && data.document) {
-        setDocsList((prev) => [data.document, ...prev]);
+        setDocsList((prev) => [data.document as DocumentRow, ...prev]);
         setNewDoc({
           title: "",
-          category: "Dernek Tüzüğü & Yönetmelikler",
+          category: DOCUMENT_CATEGORIES[0].id,
           document_code: "",
           description: "",
           file_url: "",
-          file_type: "PDF",
-          file_size: "1.2 MB",
-          page_count: 12,
+          file_format: "PDF",
+          file_size: "",
         });
+        showToast("Resmi belge kütüphaneye kaydedildi.");
+      } else {
+        showToast(data.error || "Belge kaydedilemedi.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteDoc = async (id: number) => {
+    try {
+      const res = await fetch(`/api/documents?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setDocsList((prev) => prev.filter((d) => d.id !== id));
+        showToast("Doküman kaydı silindi.");
       }
     } catch (err) {
       console.error(err);
@@ -501,7 +705,7 @@ export default function AdminPage() {
 </span>
 </div>
 <span className="font-label-sm text-label-sm text-slate-dark flex items-center justify-between pt-2 border-t border-surface-container-low">
-  <span>{applications.filter(a => a.status === 'derbis_query').length} dosya DERBİS sicil sorgusunda</span>
+  <span>{applications.filter(a => a.status === "under_review").length} dosya Kurul incelemesinde</span>
   <span className="text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform">&rarr;</span>
 </span>
 </Link>
@@ -634,11 +838,11 @@ export default function AdminPage() {
     } else if (val === "summit") {
       document.getElementById("cms-summit-section")?.scrollIntoView({ behavior: "smooth" });
     } else if (val === "events") {
-      window.location.href = "/admin/etkinlikler";
+      router.push("/admin/etkinlikler");
     } else if (val === "articles") {
-      window.location.href = "/admin/yazilar";
+      router.push("/admin/yazilar");
     } else if (val === "protocol") {
-      window.location.href = "/admin/protokol";
+      router.push("/admin/protokol");
     }
   }}
   className="appearance-none bg-surface-container-low font-label-md text-label-md text-on-surface font-semibold pl-4 pr-10 py-2.5 rounded-lg focus:outline-none focus:bg-surface-container-lowest shadow-sm cursor-pointer"
@@ -725,7 +929,26 @@ export default function AdminPage() {
 {/*  Dropzone Uploader  */}
 <div className="md:col-span-7 flex flex-col gap-2">
 <span className="font-label-sm text-label-sm text-slate-dark font-semibold">Görsel Değiştir veya Yeni Yükle</span>
-<label className="h-44 rounded-lg bg-surface-container-low hover:bg-surface-ice transition-colors flex flex-col items-center justify-center p-4 text-center cursor-pointer group border border-dashed border-slate-300">
+<label
+  onDragOver={(e) => {
+    e.preventDefault();
+    setHeroDragActive(true);
+  }}
+  onDragLeave={() => setHeroDragActive(false)}
+  onDrop={(e) => {
+    e.preventDefault();
+    setHeroDragActive(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      void handleFieldImageUpload(droppedFile, "home_hero_image", "Ana Sayfa Hero");
+    }
+  }}
+  className={`h-44 rounded-lg transition-colors flex flex-col items-center justify-center p-4 text-center cursor-pointer group border border-dashed ${
+    heroDragActive
+      ? "bg-surface-ice border-primary"
+      : "bg-surface-container-low hover:bg-surface-ice border-slate-300"
+  }`}
+>
 <div className="w-12 h-12 rounded-full bg-surface-container-lowest text-secondary flex items-center justify-center mb-2 shadow-sm group-hover:scale-105 transition-transform">
 <span className="material-symbols-outlined text-[26px]">
   {uploadingField === "home_hero_image" ? "progress_activity" : "cloud_upload"}
@@ -898,12 +1121,11 @@ export default function AdminPage() {
       onChange={(e) => setNewBoardMember({ ...newBoardMember, category: e.target.value })}
       className="bg-white px-3 py-2 rounded-lg text-sm border border-slate-200"
     >
-      <option value="yonetim_kurulu">Yönetim Kurulu</option>
-      <option value="donem_baskani">Dönem Genel Başkanı (1990-2026)</option>
-      <option value="danisma_kurulu">Yüksek İstişare &amp; Danışma Kurulu</option>
-      <option value="denetim_kurulu">Denetim &amp; Disiplin Heyeti</option>
-      <option value="onur_kurulu">Onur Kurulu Üyesi</option>
-      <option value="genc_konsey">Genç İletişimciler Konseyi</option>
+      {BOARD_CATEGORIES.map((cat) => (
+        <option key={cat.id} value={cat.id}>
+          {cat.label}
+        </option>
+      ))}
     </select>
     <input
       type="text"
@@ -926,9 +1148,21 @@ export default function AdminPage() {
       onChange={(e) => setNewBoardMember({ ...newBoardMember, bio: e.target.value })}
       className="sm:col-span-2 bg-white px-3 py-2 rounded-lg text-sm border border-slate-200"
     />
-    <div className="sm:col-span-2 flex justify-end">
+    <div className="sm:col-span-2 flex justify-end gap-2">
+      {editingBoardId && (
+        <button
+          type="button"
+          onClick={() => {
+            resetBoardForm();
+            setShowAddBoard(false);
+          }}
+          className="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+        >
+          Vazgeç
+        </button>
+      )}
       <button type="submit" className="px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold cursor-pointer">
-        Supabase Veritabanına Kaydet
+        {editingBoardId ? "Değişiklikleri Güncelle" : "Supabase Veritabanına Kaydet"}
       </button>
     </div>
   </form>
@@ -958,10 +1192,21 @@ export default function AdminPage() {
             {member.title} {member.term_period ? `• ${member.term_period}` : ""}
           </span>
           <span className="font-label-md text-label-md text-on-surface font-bold">{member.full_name}</span>
-          <span className="font-body-sm text-body-sm text-slate-muted">{member.organization || member.category}</span>
+          <span className="font-body-sm text-body-sm text-slate-muted">
+            {member.organization ? `${member.organization} • ` : ""}
+            {BOARD_CATEGORY_LABELS[normalizeBoardCategory(member.category)] || member.category}
+          </span>
         </div>
       </div>
       <div className="flex items-center gap-2 self-end md:self-center">
+        <button
+          onClick={() => handleStartEditBoardMember(member)}
+          className="p-1.5 rounded-lg text-slate-muted hover:text-primary hover:bg-surface-ice transition-colors cursor-pointer"
+          type="button"
+          title="Düzenle"
+        >
+          <span className="material-symbols-outlined text-[18px]">edit</span>
+        </button>
         <button
           onClick={() => handleDeleteBoardMember(member.id)}
           className="p-1.5 rounded-lg text-slate-muted hover:text-error hover:bg-error-container transition-colors cursor-pointer"
@@ -979,114 +1224,215 @@ export default function AdminPage() {
 
 {/*  Section 4: Haber/Duyuru ve Resmi Belge Hızlı Yayınlama Masası  */}
 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-  <form onSubmit={handleCreateNews} className="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col gap-3">
-    <div className="flex items-center justify-between">
-      <h3 className="font-headline-sm text-headline-sm text-primary font-bold">Haber &amp; Basın Bülteni Ekle ({newsList.length})</h3>
-      <Link href="/haberler" className="text-xs font-bold text-secondary hover:underline">Portalı Gör →</Link>
-    </div>
-    <input
-      type="text"
-      required
-      placeholder="Haber / Basın Bülteni Başlığı"
-      value={newNews.title}
-      onChange={(e) => setNewNews({ ...newNews, title: e.target.value })}
-      className="bg-surface-container-low px-3 py-2 rounded-lg text-sm"
-    />
-    <div className="grid grid-cols-2 gap-2">
-      <select
-        value={newNews.category}
-        onChange={(e) => setNewNews({ ...newNews, category: e.target.value })}
-        className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
-      >
-        <option value="Kurumsal Haberler">Kurumsal Haberler</option>
-        <option value="Basın Bültenleri">Basın Bültenleri</option>
-        <option value="Resmi Duyuru & Genel Kurul">Resmi Duyuru &amp; Genel Kurul</option>
-        <option value="Akademi & Ödüller">Akademi &amp; Ödüller</option>
-        <option value="Medya Yansımaları">Medya Yansımaları</option>
-      </select>
+  <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col gap-3">
+    <form onSubmit={handleCreateNews} className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-headline-sm text-headline-sm text-primary font-bold">
+          {editingNewsId ? "Haberi Düzenle" : `Haber & Basın Bülteni Ekle (${newsList.length})`}
+        </h3>
+        <Link href="/haberler" className="text-xs font-bold text-secondary hover:underline">Portalı Gör →</Link>
+      </div>
       <input
         type="text"
-        placeholder="Protokol No (Örn: BB-2026/08)"
-        value={newNews.protocol_code}
-        onChange={(e) => setNewNews({ ...newNews, protocol_code: e.target.value })}
-        className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
+        required
+        placeholder="Haber / Basın Bülteni Başlığı"
+        value={newNews.title}
+        onChange={(e) => setNewNews({ ...newNews, title: e.target.value })}
+        className="bg-surface-container-low px-3 py-2 rounded-lg text-sm"
       />
-    </div>
-    <textarea
-      rows={2}
-      placeholder="Kısa Özet / Spot Metni"
-      value={newNews.summary}
-      onChange={(e) => setNewNews({ ...newNews, summary: e.target.value })}
-      className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
-    />
-    <div className="flex items-center justify-between pt-1">
-      <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          value={newNews.category}
+          onChange={(e) => setNewNews({ ...newNews, category: e.target.value })}
+          className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
+        >
+          {NEWS_CATEGORIES.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
         <input
-          type="checkbox"
-          checked={newNews.is_headline}
-          onChange={(e) => setNewNews({ ...newNews, is_headline: e.target.checked })}
+          type="text"
+          placeholder="Bülten No (Örn: BB-2026/08)"
+          value={newNews.bulletin_no}
+          onChange={(e) => setNewNews({ ...newNews, bulletin_no: e.target.value })}
+          className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
         />
-        <span>Ana Manşet Yap</span>
-      </label>
-      <button type="submit" className="px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold cursor-pointer">
-        Haberi Yayınla
-      </button>
-    </div>
-  </form>
+      </div>
+      <textarea
+        rows={2}
+        placeholder="Kısa Özet / Spot Metni"
+        value={newNews.summary}
+        onChange={(e) => setNewNews({ ...newNews, summary: e.target.value })}
+        className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
+      />
+      <textarea
+        rows={2}
+        placeholder="Tam Duyuru / Haber Metni (Opsiyonel)"
+        value={newNews.content}
+        onChange={(e) => setNewNews({ ...newNews, content: e.target.value })}
+        className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
+      />
+      <input
+        type="text"
+        placeholder="Kapak Görsel URL (Opsiyonel)"
+        value={newNews.image_url}
+        onChange={(e) => setNewNews({ ...newNews, image_url: e.target.value })}
+        className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
+      />
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={newNews.is_featured}
+              onChange={(e) => setNewNews({ ...newNews, is_featured: e.target.checked })}
+            />
+            <span>Manşet / Öne Çıkan</span>
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={newNews.is_member_only}
+              onChange={(e) => setNewNews({ ...newNews, is_member_only: e.target.checked })}
+            />
+            <span>Üyelere Özel İçerik</span>
+          </label>
+        </div>
+        <div className="flex items-center gap-2">
+          {editingNewsId && (
+            <button
+              type="button"
+              onClick={resetNewsForm}
+              className="px-3 py-2 rounded-lg bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+            >
+              İptal
+            </button>
+          )}
+          <button type="submit" className="px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold cursor-pointer">
+            {editingNewsId ? "Haberi Güncelle" : "Haberi Yayınla"}
+          </button>
+        </div>
+      </div>
+    </form>
 
-  <form onSubmit={handleCreateDoc} className="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col gap-3">
-    <div className="flex items-center justify-between">
-      <h3 className="font-headline-sm text-headline-sm text-primary font-bold">Mevzuat &amp; Resmi Belge Ekle ({docsList.length})</h3>
-      <Link href="/kaynaklar" className="text-xs font-bold text-secondary hover:underline">Kütüphaneyi Gör →</Link>
-    </div>
-    <input
-      type="text"
-      required
-      placeholder="Belge Başlığı (Örn: AHİD Ana Tüzüğü)"
-      value={newDoc.title}
-      onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
-      className="bg-surface-container-low px-3 py-2 rounded-lg text-sm"
-    />
-    <div className="grid grid-cols-2 gap-2">
-      <select
-        value={newDoc.category}
-        onChange={(e) => setNewDoc({ ...newDoc, category: e.target.value })}
-        className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
-      >
-        <option value="Dernek Tüzüğü & Yönetmelikler">Dernek Tüzüğü &amp; Yönetmelikler</option>
-        <option value="Mesleki Etik & İlkeler">Mesleki Etik &amp; İlkeler</option>
-        <option value="Sektörel Araştırma Raporları">Sektörel Araştırma Raporları</option>
-        <option value="Genel Kurul & Denetim">Genel Kurul &amp; Denetim</option>
-        <option value="Kurumsal Kimlik & Logolar">Kurumsal Kimlik &amp; Logolar</option>
-      </select>
+    {newsList.length > 0 && (
+      <div className="pt-3 border-t border-slate-100 flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+        {newsList.slice(0, 6).map((item) => (
+          <div key={item.id} className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-surface-container-low text-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              {item.is_member_only && (
+                <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold shrink-0">ÜYE</span>
+              )}
+              <span className="font-semibold text-primary truncate">{item.title}</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => handleStartEditNews(item)}
+                className="p-1 text-slate-500 hover:text-primary cursor-pointer"
+                title="Düzenle"
+              >
+                <span className="material-symbols-outlined text-sm">edit</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteNews(item.id)}
+                className="p-1 text-slate-500 hover:text-red-600 cursor-pointer"
+                title="Sil"
+              >
+                <span className="material-symbols-outlined text-sm">delete</span>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col gap-3">
+    <form onSubmit={handleCreateDoc} className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-headline-sm text-headline-sm text-primary font-bold">Mevzuat &amp; Resmi Belge Ekle ({docsList.length})</h3>
+        <Link href="/kaynaklar" className="text-xs font-bold text-secondary hover:underline">Kütüphaneyi Gör →</Link>
+      </div>
       <input
         type="text"
-        placeholder="Belge No (Örn: AHID-2026-8841)"
-        value={newDoc.document_code}
-        onChange={(e) => setNewDoc({ ...newDoc, document_code: e.target.value })}
-        className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
+        required
+        placeholder="Belge Başlığı (Örn: AHİD Ana Tüzüğü)"
+        value={newDoc.title}
+        onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
+        className="bg-surface-container-low px-3 py-2 rounded-lg text-sm"
       />
-    </div>
-    <input
-      type="text"
-      placeholder="Belge Açıklaması / Kapsamı"
-      value={newDoc.description}
-      onChange={(e) => setNewDoc({ ...newDoc, description: e.target.value })}
-      className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
-    />
-    <div className="flex items-center justify-between pt-1">
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          value={newDoc.category}
+          onChange={(e) => setNewDoc({ ...newDoc, category: e.target.value })}
+          className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
+        >
+          {DOCUMENT_CATEGORIES.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.label}</option>
+          ))}
+        </select>
+        <input
+          type="text"
+          placeholder="Belge No (Örn: AHID-2026-01)"
+          value={newDoc.document_code}
+          onChange={(e) => setNewDoc({ ...newDoc, document_code: e.target.value })}
+          className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
+        />
+      </div>
       <input
         type="text"
-        placeholder="Dosya İndirme URL (PDF/ZIP)"
-        value={newDoc.file_url}
-        onChange={(e) => setNewDoc({ ...newDoc, file_url: e.target.value })}
-        className="bg-surface-container-low px-3 py-1.5 rounded-lg text-xs w-48"
+        placeholder="Belge Açıklaması / Kapsamı"
+        value={newDoc.description}
+        onChange={(e) => setNewDoc({ ...newDoc, description: e.target.value })}
+        className="bg-surface-container-low px-3 py-2 rounded-lg text-xs"
       />
-      <button type="submit" className="px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold cursor-pointer">
-        Belgeyi Kaydet
-      </button>
-    </div>
-  </form>
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <input
+            type="text"
+            placeholder="Dosya İndirme URL (PDF)"
+            value={newDoc.file_url}
+            onChange={(e) => setNewDoc({ ...newDoc, file_url: e.target.value })}
+            className="bg-surface-container-low px-3 py-1.5 rounded-lg text-xs flex-1 min-w-0"
+          />
+          <label className="px-2.5 py-1.5 rounded-lg bg-surface-ice text-primary text-xs font-bold cursor-pointer hover:bg-surface-variant shrink-0">
+            {uploadingDocFile ? "Yükleniyor..." : "PDF Yükle"}
+            <input
+              type="file"
+              accept="application/pdf,.pdf"
+              className="hidden"
+              onChange={(e) => void handleDocFileUpload(e.target.files?.[0])}
+            />
+          </label>
+        </div>
+        <button type="submit" className="px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold cursor-pointer shrink-0">
+          Belgeyi Kaydet
+        </button>
+      </div>
+    </form>
+
+    {docsList.length > 0 && (
+      <div className="pt-3 border-t border-slate-100 flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+        {docsList.slice(0, 6).map((doc) => (
+          <div key={doc.id} className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-surface-container-low text-xs">
+            <span className="font-semibold text-primary truncate">
+              {doc.document_code ? `[${doc.document_code}] ` : ""}{doc.title}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleDeleteDoc(doc.id)}
+              className="p-1 text-slate-500 hover:text-red-600 cursor-pointer shrink-0"
+              title="Sil"
+            >
+              <span className="material-symbols-outlined text-sm">delete</span>
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
 </div>
 {/*  Section 3: Duyuru & Etkinlik Afişi Yönetimi  */}
 <div id="cms-summit-section" className="bg-surface-container-lowest p-7 rounded-xl shadow-sm flex flex-col gap-6">
@@ -1199,7 +1545,7 @@ export default function AdminPage() {
               ? "bg-emerald-100 text-emerald-800"
               : app.status === "rejected"
               ? "bg-red-100 text-red-800"
-              : app.status === "derbis_query"
+              : app.status === "under_review"
               ? "bg-amber-100 text-amber-800"
               : "bg-surface-ice text-primary"
           }`}>
@@ -1207,30 +1553,32 @@ export default function AdminPage() {
               ? "Onaylandı"
               : app.status === "rejected"
               ? "Reddedildi"
-              : app.status === "derbis_query"
-              ? "DERBİS Sorgu"
-              : "İncelemede"}
+              : app.status === "under_review"
+              ? "Kurul İncelemesi"
+              : "Bekliyor"}
           </span>
         </div>
         <p className="font-body-sm text-body-sm text-slate-dark text-xs">
           <strong>Pozisyon:</strong> {app.position || "Belirtilmedi"} | <strong>E-Posta:</strong> {app.email}
         </p>
         <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
-          <span className="text-[11px] font-medium text-slate-500">{app.admin_notes || "Sicil masası incelemede"}</span>
+          <span className="text-[11px] font-medium text-slate-500">
+            {parseApplicationMeta(app.admin_notes).note || "Sicil masası incelemede"}
+          </span>
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => handleUpdateStatus(app.id, "rejected")}
-              className="px-2.5 py-1 rounded bg-surface-container-lowest text-error hover:bg-error-container font-label-sm text-xs font-semibold transition-colors"
+              className="px-2.5 py-1 rounded bg-surface-container-lowest text-error hover:bg-error-container font-label-sm text-xs font-semibold transition-colors cursor-pointer"
               type="button"
             >
               Reddet
             </button>
             <button
-              onClick={() => handleUpdateStatus(app.id, "derbis_query")}
-              className="px-2 py-1 rounded bg-amber-100 text-amber-800 hover:bg-amber-200 text-xs font-semibold transition-colors"
+              onClick={() => handleUpdateStatus(app.id, "under_review")}
+              className="px-2 py-1 rounded bg-amber-100 text-amber-800 hover:bg-amber-200 text-xs font-semibold transition-colors cursor-pointer"
               type="button"
             >
-              DERBİS
+              İncele
             </button>
             <button
               onClick={() => handleUpdateStatus(app.id, "approved")}

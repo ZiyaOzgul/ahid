@@ -42,14 +42,31 @@ function getArticleCategoryDisplay(category?: string): string {
   return "Köşe Yazısı";
 }
 
+interface ArticleItem {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  author_name: string;
+  author_title: string | null;
+  author_avatar: string | null;
+  summary: string | null;
+  content: string | null;
+  read_time: string | null;
+  published_at: string | null;
+  image_url: string | null;
+  views_count: number | null;
+  is_featured?: boolean | null;
+}
+
 function YayinlarContent() {
   const searchParams = useSearchParams();
   const queryParam = searchParams.get("q") || "";
   const categoryParam = searchParams.get("category") || "all";
 
-  const [articles, setArticles] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string>(categoryParam);
-  const [searchQuery, setSearchQuery] = useState<string>(queryParam);
+  const [articles, setArticles] = useState<ArticleItem[]>([]);
+  const [categoryOverride, setCategoryOverride] = useState<string | null>(null);
+  const [searchOverride, setSearchOverride] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>("newest");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -57,15 +74,17 @@ function YayinlarContent() {
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Sync state if URL search params change
-  useEffect(() => {
-    if (searchParams.get("q") !== null) {
-      setSearchQuery(searchParams.get("q") || "");
-    }
-    if (searchParams.get("category") !== null) {
-      setActiveCategory(searchParams.get("category") || "all");
-    }
-  }, [searchParams]);
+  const activeCategory = categoryOverride ?? categoryParam;
+  const searchQuery = searchOverride ?? queryParam;
+
+  const setActiveCategory = (next: string) => {
+    setCategoryOverride(next);
+    setCurrentPage(1);
+  };
+  const setSearchQuery = (next: string) => {
+    setSearchOverride(next);
+    setCurrentPage(1);
+  };
 
   useEffect(() => {
     fetch("/api/articles")
@@ -78,10 +97,6 @@ function YayinlarContent() {
       .catch((err) => console.error("Error loading articles:", err))
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeCategory, searchQuery, sortBy]);
 
   const filteredArticles = articles
     .filter((art) => {
@@ -258,7 +273,7 @@ function YayinlarContent() {
   onClick={() => setActiveCategory("usta_saygi")}
   className={`px-4 py-2 rounded whitespace-nowrap transition-all ${activeCategory === "usta_saygi" ? "bg-primary text-on-primary font-bold shadow-sm" : "bg-surface-ice hover:bg-surface-variant text-primary"}`}
 >
-  Usta'ya Saygı ({articles.filter((a) => normalizeArticleCategory(a.category) === "usta_saygi").length})
+  Usta&apos;ya Saygı ({articles.filter((a) => normalizeArticleCategory(a.category) === "usta_saygi").length})
 </button>
 <button
   onClick={() => setActiveCategory("akademik")}
@@ -369,10 +384,10 @@ function YayinlarContent() {
 <span>ÖZEL KOLEKSİYON</span>
 </div>
 <h2 className="font-headline-lg text-headline-lg text-primary font-bold tracking-tight">
-            Usta'ya Saygı Serisi: Türk PR Mesleğinin Kurucu İsimleri ve Mirası
+            Usta&apos;ya Saygı Serisi: Türk PR Mesleğinin Kurucu İsimleri ve Mirası
           </h2>
 <p className="font-body-md text-body-md text-slate-dark mt-2">
-            Mesleğimizin Türkiye'deki ilk adımlarını atan, etik temellerini kuran ve derneğimizin 36 yıllık yolculuğuna ışık tutan usta iletişimcilerin kaleminden tarihi metinler ve hayat dersleri.
+            Mesleğimizin Türkiye&apos;deki ilk adımlarını atan, etik temellerini kuran ve derneğimizin 36 yıllık yolculuğuna ışık tutan usta iletişimcilerin kaleminden tarihi metinler ve hayat dersleri.
           </p>
 </div>
 </div>
@@ -380,7 +395,7 @@ function YayinlarContent() {
 {ustaSaygiArticles.length === 0 ? (
   <div className="bg-surface-container-lowest rounded-xl p-10 text-center border border-dashed border-slate-200">
     <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">history_edu</span>
-    <h3 className="font-headline-sm text-headline-sm text-primary font-bold">Usta'ya Saygı Koleksiyonunda Kayıt Yok</h3>
+    <h3 className="font-headline-sm text-headline-sm text-primary font-bold">Usta&apos;ya Saygı Koleksiyonunda Kayıt Yok</h3>
     <p className="font-body-sm text-body-sm text-slate-500 mt-1">
       Veritabanına &quot;usta_saygi&quot; kategorisinde makale eklendiğinde burada listelenecektir.
     </p>
@@ -396,7 +411,7 @@ function YayinlarContent() {
           </div>
           <div className="flex items-center gap-space-sm mb-space-md">
             {item.author_avatar || item.image_url ? (
-              <img className="w-14 h-14 rounded-full object-cover shadow-sm" src={item.author_avatar || item.image_url} alt={item.author_name} />
+              <img className="w-14 h-14 rounded-full object-cover shadow-sm" src={item.author_avatar || item.image_url || ""} alt={item.author_name} />
             ) : (
               <div className="w-14 h-14 rounded-full bg-surface-ice text-primary font-bold flex items-center justify-center text-lg">
                 {(item.author_name || "U")[0]}
@@ -416,6 +431,12 @@ function YayinlarContent() {
           <span className="font-caption-caps text-caption-caps text-slate-muted flex items-center gap-1">
             <span className="material-symbols-outlined text-xs">menu_book</span> {item.read_time || "Okuma"}
           </span>
+          <Link
+            href={`/yayinlar/${item.slug}`}
+            className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+          >
+            Oku <span className="material-symbols-outlined text-xs">arrow_forward</span>
+          </Link>
         </div>
       </article>
     ))}
@@ -525,7 +546,7 @@ function YayinlarContent() {
                 {art.author_name || "AHİD Yayın Kurulu"}
               </h4>
               <p className="font-caption-caps text-caption-caps text-slate-muted">
-                {art.board_members?.role_title || "Yazar"}
+                {art.author_title || "Yazar"}
               </p>
             </div>
           </div>
@@ -597,10 +618,10 @@ function YayinlarContent() {
 <span>AKADEMİK &amp; SEKTÖREL KATKI ÇAĞRISI</span>
 </div>
 <h3 className="font-headline-lg text-headline-lg text-primary font-bold tracking-tight">
-              AHİD Yayın Kurulu'na Yazı veya Akademik Makale Gönderin
+              AHİD Yayın Kurulu&apos;na Yazı veya Akademik Makale Gönderin
             </h3>
 <p className="font-body-md text-body-md text-slate-dark mt-space-sm leading-relaxed">
-              İletişim bilimi, kamu diplomasisi, kurum içi iletişim ve dijital itibar konularında kaleme aldığınız özgün analizleri AHİD'in 30 bini aşkın kurumsal ve akademik okuyucu kitlesiyle buluşturun.
+              İletişim bilimi, kamu diplomasisi, kurum içi iletişim ve dijital itibar konularında kaleme aldığınız özgün analizleri AHİD&apos;in kurumsal ve akademik okuyucu kitlesiyle buluşturun.
             </p>
 <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm my-space-md font-body-sm text-body-sm text-slate-muted">
 <div className="flex items-center gap-2">
@@ -617,7 +638,7 @@ function YayinlarContent() {
 </div>
 <div className="flex items-center gap-2">
 <span className="material-symbols-outlined text-secondary text-base">check_circle</span>
-<span>DOI ve Açık Erişim İndeksleme</span>
+<span>Tam Metin Kurumsal Arşivleme</span>
 </div>
 </div>
 </div>

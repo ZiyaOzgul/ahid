@@ -55,8 +55,8 @@ export default function CountUpNumber({
     if (!hasEntered) return;
 
     if (targetNumber <= 0) {
-      setDisplayValue(0);
-      return;
+      const zeroId = requestAnimationFrame(() => setDisplayValue(0));
+      return () => cancelAnimationFrame(zeroId);
     }
 
     let animationFrameId = 0;

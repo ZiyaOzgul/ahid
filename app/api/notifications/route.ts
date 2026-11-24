@@ -1,183 +1,171 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { supabaseServer } from "@/lib/supabase-server";
 
-const READ_NOTIF_KEY = "admin_read_notification_ids";
-
-async function getServerReadNotificationIds(): Promise<string[]> {
-  try {
-    const { data } = await supabase
-      .from("cms_variables")
-      .select("value")
-      .eq("key", READ_NOTIF_KEY)
-      .maybeSingle();
-    if (!data?.value) return [];
-    const parsed = JSON.parse(data.value);
-    return Array.isArray(parsed) ? parsed.map(String) : [];
-  } catch {
-    return [];
-  }
-}
-
-async function saveServerReadNotificationIds(ids: string[]) {
-  const trimmed = Array.from(new Set(ids)).slice(-150);
-  await supabase.from("cms_variables").upsert(
-    {
-      key: READ_NOTIF_KEY,
-      value: JSON.stringify(trimmed),
-      page: "system",
-      section: "notifications",
-      description: "Yönetici bildirim okunma kayıtları",
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "key" }
-  );
-}
-
-export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req);
+export async function GET(request: Request) {
+  const auth = await requireAdmin(request);
   if ("response" in auth) return auth.response;
 
   try {
-    const [pendingAppsRes, unreadMsgRes, serverReadIds] = await Promise.all([
-      supabase
-        .from("membership_applications")
-        .select("id, application_no, first_name, last_name, tier, created_at")
-        .eq("status", "pending")
-        .order("id", { ascending: false })
-        .limit(8),
-      supabase
-        .from("contact_messages")
-        .select("id, name, department, subject, created_at")
-        .eq("status", "unread")
-        .order("id", { ascending: false })
-        .limit(8),
-      getServerReadNotificationIds(),
-    ]);
+    const [pendingAppsRes, newMsgsRes, pendingDuesRes, cmsReadRes] =
+      await Promise.all([
+        supabaseServer
+          .from("membership_applications")
+          .select("id, first_name, last_name, application_no, tier, created_at")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(10),
+        supabaseServer
+          .from("contact_messages")
+          .select("id, name, subject, type, created_at")
+          .eq("status", "new")
+          .order("created_at", { ascending: false })
+          .limit(10),
+        supabaseServer
+          .from("member_dues")
+          .select("id, period, amount, receipt_no, created_at")
+          .eq("status", "pending")
+          .not("receipt_no", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(8),
+        supabaseServer
+          .from("cms_variables")
+          .select("value")
+          .eq("page", "admin")
+          .eq("section", "notifications")
+          .eq("key", "read_ids")
+          .maybeSingle(),
+      ]);
 
-    const readSet = new Set(serverReadIds);
-    const notifications: Array<{
-      id: string;
-      title: string;
-      message: string;
-      time: string;
-      link: string;
-      type: "application" | "contact" | "article" | "system";
-      unread: boolean;
-    }> = [];
+    let readIds: string[] = [];
+    if (cmsReadRes.data?.value) {
+      try {
+        const parsed = JSON.parse(cmsReadRes.data.value) as string[];
+        if (Array.isArray(parsed)) readIds = parsed;
+      } catch {
+        readIds = [];
+      }
+    }
+    const readSet = new Set(readIds);
 
-    if (pendingAppsRes.data && pendingAppsRes.data.length > 0) {
-      pendingAppsRes.data.forEach((app) => {
+    const notifications = [
+      ...(pendingAppsRes.data || []).map((app) => {
         const id = `app-${app.id}`;
-        notifications.push({
+        return {
           id,
-          title: "Yeni Üyelik Başvurusu",
-          message: `${app.first_name} ${app.last_name} (${app.tier?.toUpperCase() || "ASİL"}) - Sicil onayı bekliyor`,
-          time: new Date(app.created_at || Date.now()).toLocaleDateString("tr-TR", {
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          link: "/admin/uyelik",
           type: "application",
-          unread: !readSet.has(id),
-        });
-      });
-    }
-
-    if (unreadMsgRes.data && unreadMsgRes.data.length > 0) {
-      unreadMsgRes.data.forEach((msg) => {
+          title: `Yeni Üyelik Başvurusu (${app.application_no})`,
+          description: `${app.first_name} ${app.last_name} — ${app.tier}`,
+          href: "/admin/uyelik",
+          created_at: app.created_at,
+          read: readSet.has(id),
+        };
+      }),
+      ...(newMsgsRes.data || []).map((msg) => {
         const id = `msg-${msg.id}`;
-        notifications.push({
+        return {
           id,
-          title: "Yeni Protokol / İletişim Mesajı",
-          message: `${msg.name} - ${msg.subject || msg.department || "İletişim Talebi"}`,
-          time: new Date(msg.created_at || Date.now()).toLocaleDateString("tr-TR", {
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          link: "/admin/protokol",
-          type: "contact",
-          unread: !readSet.has(id),
-        });
-      });
-    }
+          type: msg.type === "protocol_appointment" ? "protocol" : "message",
+          title:
+            msg.type === "protocol_appointment"
+              ? `Protokol Randevu Talebi: ${msg.name}`
+              : `Yeni Mesaj: ${msg.name}`,
+          description: msg.subject || "İletişim formu üzerinden iletildi",
+          href: "/admin/protokol",
+          created_at: msg.created_at,
+          read: readSet.has(id),
+        };
+      }),
+      ...(pendingDuesRes.data || []).map((due) => {
+        const id = `due-${due.id}`;
+        return {
+          id,
+          type: "dues",
+          title: `Dekont Bildirimi (${due.receipt_no})`,
+          description: `${due.period} — ₺${Number(due.amount).toLocaleString("tr-TR")}`,
+          href: "/admin/uyelik",
+          created_at: due.created_at,
+          read: readSet.has(id),
+        };
+      }),
+    ].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
 
-    const unreadCount = notifications.filter((n) => n.unread).length;
+    const unreadCount = notifications.filter((n) => !n.read).length;
 
     return NextResponse.json({
       success: true,
-      count: unreadCount,
-      totalCount: notifications.length,
       notifications,
+      unreadCount,
     });
-  } catch (error: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message, count: 0, notifications: [] },
+      { error: err instanceof Error ? err.message : "Bildirimler yüklenemedi." },
       { status: 500 }
     );
   }
 }
 
-export async function PATCH(req: NextRequest) {
-  const auth = await requireAdmin(req);
+export async function PATCH(request: Request) {
+  const auth = await requireAdmin(request);
   if ("response" in auth) return auth.response;
 
   try {
-    let bodyIds: string[] = [];
-    try {
-      const body = await req.json();
-      if (Array.isArray(body?.ids)) {
-        bodyIds = body.ids.map(String);
+    const body = (await request.json()) as {
+      id?: string;
+      ids?: string[];
+      markAllRead?: boolean;
+    };
+
+    const { data: existing } = await supabaseServer
+      .from("cms_variables")
+      .select("id, value")
+      .eq("page", "admin")
+      .eq("section", "notifications")
+      .eq("key", "read_ids")
+      .maybeSingle();
+
+    let current: string[] = [];
+    if (existing?.value) {
+      try {
+        const parsed = JSON.parse(existing.value) as string[];
+        if (Array.isArray(parsed)) current = parsed;
+      } catch {
+        current = [];
       }
-    } catch {
-      // empty body means mark all notifications read
     }
 
-    const existingRead = await getServerReadNotificationIds();
+    const toAdd = body.ids || (body.id ? [body.id] : []);
+    const merged = Array.from(new Set([...current, ...toAdd])).slice(-200);
+    const serialized = JSON.stringify(merged);
 
-    if (bodyIds.length > 0) {
-      const msgIds = bodyIds
-        .filter((id) => id.startsWith("msg-"))
-        .map((id) => Number(id.replace("msg-", "")))
-        .filter((n) => !Number.isNaN(n));
-
-      if (msgIds.length > 0) {
-        await supabase
-          .from("contact_messages")
-          .update({ status: "read" })
-          .in("id", msgIds)
-          .eq("status", "unread");
-      }
-
-      await saveServerReadNotificationIds([...existingRead, ...bodyIds]);
+    if (existing?.id) {
+      await supabaseServer
+        .from("cms_variables")
+        .update({
+          value: serialized,
+          updated_at: new Date().toISOString(),
+          updated_by: auth.user.id,
+        })
+        .eq("id", existing.id);
     } else {
-      const { data: pendingApps } = await supabase
-        .from("membership_applications")
-        .select("id")
-        .eq("status", "pending");
-
-      const appIds = (pendingApps || []).map((a) => `app-${a.id}`);
-
-      await supabase
-        .from("contact_messages")
-        .update({ status: "read" })
-        .eq("status", "unread");
-
-      await saveServerReadNotificationIds([...existingRead, ...appIds]);
+      await supabaseServer.from("cms_variables").insert({
+        page: "admin",
+        section: "notifications",
+        key: "read_ids",
+        value: serialized,
+        description: "Okunmuş yönetici bildirim ID listesi",
+        updated_by: auth.user.id,
+      });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Bildirimler okundu olarak işaretlendi.",
-    });
-  } catch (error: any) {
+    return NextResponse.json({ success: true, readCount: merged.length });
+  } catch (err: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : "Geçersiz istek." },
+      { status: 400 }
     );
   }
 }

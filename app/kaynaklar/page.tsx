@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -32,6 +33,17 @@ const DOC_CATEGORIES = [
 ];
 
 export default function KaynaklarPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f9f9ff]" />}>
+      <KaynaklarContent />
+    </Suspense>
+  );
+}
+
+function KaynaklarContent() {
+  const searchParams = useSearchParams();
+  const initialKod = (searchParams.get("kod") || "").trim();
+
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("Tümü");
@@ -40,12 +52,14 @@ export default function KaynaklarPage() {
   const [sortBy, setSortBy] = useState("newest");
 
   // Document Verification State (Connected to Supabase /api/documents?verify_code=...)
-  const [verifyCode, setVerifyCode] = useState("");
+  const [verifyCode, setVerifyCode] = useState(initialKod);
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<{
     checked: boolean;
     verified: boolean;
     document: DocumentItem | null;
+    qrDataUrl?: string | null;
+    message?: string | null;
   }>({ checked: false, verified: false, document: null });
 
   // Archive Request Modal State (Connected to Supabase /api/contact)
@@ -72,6 +86,31 @@ export default function KaynaklarPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!initialKod) return;
+    let active = true;
+    fetch(`/api/documents?verify_code=${encodeURIComponent(initialKod)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        setVerifyResult({
+          checked: true,
+          verified: Boolean(data.verified && data.document),
+          document: data.document || null,
+          qrDataUrl: data.qrDataUrl || null,
+          message: data.error || data.message || null,
+        });
+      })
+      .catch(() => {
+        if (active) {
+          setVerifyResult({ checked: true, verified: false, document: null });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [initialKod]);
+
   const handleVerifyDocument = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!verifyCode.trim()) return;
@@ -85,6 +124,8 @@ export default function KaynaklarPage() {
         checked: true,
         verified: Boolean(data.verified && data.document),
         document: data.document || null,
+        qrDataUrl: data.qrDataUrl || null,
+        message: data.error || data.message || null,
       });
     } catch (err) {
       console.error(err);
@@ -187,7 +228,7 @@ export default function KaynaklarPage() {
                     verified
                   </span>
                   <span>
-                    T.C. İÇİŞLERİ BAKANLIĞI DERBİS &amp; RESMİ DİJİTAL ARŞİV
+                    RESMİ KURUMSAL MEVZUAT &amp; DİJİTAL BELGE ARŞİVİ
                   </span>
                 </div>
                 <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl text-[#002869] font-bold tracking-tight">
@@ -255,7 +296,7 @@ export default function KaynaklarPage() {
                     06-039-142
                   </span>
                   <span className="text-xs text-[#64748b] font-semibold truncate">
-                    DERBİS Kütük No
+                    Dernek Kütük Numarası
                   </span>
                 </div>
               </div>
@@ -268,10 +309,10 @@ export default function KaynaklarPage() {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-[#101c2e] leading-tight">
-                    %100 Dijital İmza
+                    QR &amp; Kod Doğrulama
                   </span>
                   <span className="text-xs text-[#64748b] font-semibold truncate">
-                    KamuSM Doğrulama Uyumu
+                    AHİD Resmi Belge Kaydı
                   </span>
                 </div>
               </div>
@@ -324,7 +365,7 @@ export default function KaynaklarPage() {
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-4">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#ebf2fc] text-[#002869]">
-                          {doc.signature_status || "DERBİS ONAYLI"}
+                          {doc.signature_status || "Yönetim Kurulu Onaylı"}
                         </span>
                         <span className="material-symbols-outlined text-[#002869] text-xl">
                           gavel
@@ -732,16 +773,23 @@ export default function KaynaklarPage() {
                       ) : (
                         <>
                           <div className="text-sm font-bold">
-                            Belge Kaydı Bulunamadı
+                            Belge Doğrulanamadı
                           </div>
                           <div className="text-xs opacity-80">
-                            Girilen doğrulama koduna ({verifyCode}) ait aktif bir
-                            dijital belge kaydı veritabanında bulunamadı.
+                            {verifyResult.message ||
+                              `Girilen doğrulama koduna (${verifyCode}) ait aktif bir dijital belge kaydı veritabanında bulunamadı.`}
                           </div>
                         </>
                       )}
                     </div>
                   </div>
+                  {verifyResult.verified && verifyResult.qrDataUrl && (
+                    <img
+                      src={verifyResult.qrDataUrl}
+                      alt="Belge Doğrulama QR"
+                      className="w-16 h-16 rounded-lg bg-white p-1 border border-[#c4c6d3] shrink-0"
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -794,7 +842,7 @@ export default function KaynaklarPage() {
             <div className="flex-1 flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <h4 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-[#002869]">
-                  Yasal Güvence, DERBİS Akreditasyonu ve Fikri Mülkiyet Bildirimi
+                  Yasal Güvence, Dernek Tüzüğü ve Fikri Mülkiyet Bildirimi
                 </h4>
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#ebf2fc] text-[#002869]">
                   T.C. 5253 Sayılı Kanun

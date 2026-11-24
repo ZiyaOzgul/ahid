@@ -1,160 +1,270 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { NextResponse } from "next/server";
 import { isAdminRole, requireAuth } from "@/lib/auth";
+import { parsePositiveId, SITE_BASE_URL } from "@/lib/constants";
+import { hashPassword } from "@/lib/password";
+import { generateQrDataUrl } from "@/lib/qr";
+import { recordAuditLog } from "@/lib/audit";
+import { supabaseServer } from "@/lib/supabase-server";
+import type { TablesUpdate } from "@/types/database.types";
 
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const rawIdentifier = searchParams.get("identifier")?.trim();
-    const queryIdentifier = rawIdentifier ? rawIdentifier.replace(/[,()]/g, "") : "";
-    const userId = searchParams.get("user_id");
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const verifyMemberNo = (searchParams.get("verify_member_no") || "").trim();
 
-    let member: any = null;
-    let application: any = null;
-    let dues: any[] = [];
-    let registrations: any[] = [];
+  // Minimal public card authenticity verification (no PII leaked)
+  if (verifyMemberNo) {
+    const { data: verifiedUser } = await supabaseServer
+      .from("users")
+      .select("full_name, member_no, title, role")
+      .eq("member_no", verifyMemberNo.toUpperCase())
+      .maybeSingle();
 
-    if (userId) {
-      const { data } = await supabase
-        .from("users")
-        .select("id, email, full_name, role, member_no, tc_no, phone, title, avatar_url, created_at")
-        .eq("id", Number(userId))
-        .maybeSingle();
-      member = data;
-    } else if (queryIdentifier) {
-      const { data } = await supabase
-        .from("users")
-        .select("id, email, full_name, role, member_no, tc_no, phone, title, avatar_url, created_at")
-        .or(
-          `email.eq.${queryIdentifier},member_no.eq.${queryIdentifier},tc_no.eq.${queryIdentifier}`
-        )
-        .maybeSingle();
-      member = data;
-
-      if (!member) {
-        const { data: appData } = await supabase
-          .from("membership_applications")
-          .select("*")
-          .or(
-            `email.eq.${queryIdentifier},application_no.eq.${queryIdentifier},tc_no.eq.${queryIdentifier}`
-          )
-          .order("id", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        application = appData;
-      }
+    if (!verifiedUser) {
+      return NextResponse.json({
+        success: true,
+        verified: false,
+        message: "Bu üye numarasına ait aktif kayıt bulunamadı.",
+      });
     }
-
-    if (member) {
-      const [duesRes, regRes] = await Promise.all([
-        supabase
-          .from("member_dues")
-          .select("*")
-          .eq("user_id", member.id)
-          .order("id", { ascending: false }),
-        supabase
-          .from("event_registrations")
-          .select("*, events(id, title, event_date, event_time, location, category)")
-          .or(`user_id.eq.${member.id},email.eq.${member.email}`)
-          .order("id", { ascending: false }),
-      ]);
-      dues = duesRes.data || [];
-      registrations = regRes.data || [];
-    } else if (application) {
-      const { data: regData } = await supabase
-        .from("event_registrations")
-        .select("*, events(id, title, event_date, event_time, location, category)")
-        .eq("email", application.email)
-        .order("id", { ascending: false });
-      registrations = regData || [];
-    }
-
-    const [noticesRes, eventsRes] = await Promise.all([
-      supabase
-        .from("news_announcements")
-        .select("*")
-        .order("id", { ascending: false })
-        .limit(5),
-      supabase
-        .from("events")
-        .select("*")
-        .order("id", { ascending: false })
-        .limit(4),
-    ]);
 
     return NextResponse.json({
       success: true,
-      member,
-      application,
-      dues,
-      registrations,
-      notices: noticesRes.data || [],
-      upcomingEvents: eventsRes.data || [],
+      verified: true,
+      member_no: verifiedUser.member_no,
+      full_name: verifiedUser.full_name,
+      title: verifiedUser.title || "Dernek Üyesi",
+      status: "Aktif AHİD Üyesi",
     });
-  } catch (error: any) {
+  }
+
+  // Strictly require authenticated session for private portal data (KVKK protection)
+  const auth = await requireAuth(request);
+  if ("response" in auth) return auth.response;
+
+  const requestedUserId = parsePositiveId(searchParams.get("user_id"));
+  const isAdmin = isAdminRole(auth.user.role);
+  const targetUserId =
+    isAdmin && requestedUserId ? requestedUserId : auth.user.id;
+
+  const { data: user, error: userError } = await supabaseServer
+    .from("users")
+    .select(
+      "id, full_name, email, role, title, member_no, phone, avatar_url, created_at"
+    )
+    .eq("id", targetUserId)
+    .maybeSingle();
+
+  if (userError || !user) {
     return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
+      { error: "Üye profili bulunamadı." },
+      { status: 404 }
     );
   }
+
+  const [duesRes, regsRes, memberNewsRes, appRes] = await Promise.all([
+    supabaseServer
+      .from("member_dues")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabaseServer
+      .from("event_registrations")
+      .select("*, events(*)")
+      .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+      .order("created_at", { ascending: false }),
+    supabaseServer
+      .from("news_announcements")
+      .select(
+        "id, title, slug, category, summary, published_at, is_member_only, read_time"
+      )
+      .eq("is_member_only", true)
+      .order("published_at", { ascending: false })
+      .limit(10),
+    supabaseServer
+      .from("membership_applications")
+      .select("*")
+      .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const verifyTarget = user.member_no || String(user.id);
+  const verificationUrl = `${SITE_BASE_URL}/uye-paneli?dogrula=${encodeURIComponent(
+    verifyTarget
+  )}`;
+  const qrDataUrl = await generateQrDataUrl(verificationUrl);
+
+  return NextResponse.json({
+    success: true,
+    member: user,
+    user,
+    application: appRes.data || null,
+    dues: duesRes.data || [],
+    registrations: regsRes.data || [],
+    notices: memberNewsRes.data || [],
+    memberAnnouncements: memberNewsRes.data || [],
+    qrDataUrl,
+    verificationUrl,
+  });
 }
 
-export async function PATCH(req: NextRequest) {
-  const auth = await requireAuth(req);
+export async function PATCH(request: Request) {
+  const auth = await requireAuth(request);
   if ("response" in auth) return auth.response;
 
   try {
-    const body = await req.json();
-    const { id, full_name, title, phone, email } = body;
+    const body = (await request.json()) as {
+      user_id?: number | string;
+      id?: number | string;
+      full_name?: string;
+      phone?: string | null;
+      title?: string | null;
+      avatar_url?: string | null;
+      password?: string;
+    };
 
-    if (!id) {
-      return NextResponse.json(
-        { success: false, error: "Üye ID belirtilmelidir." },
-        { status: 400 }
-      );
-    }
+    const isAdmin = isAdminRole(auth.user.role);
+    const requestedId = parsePositiveId(body.user_id ?? body.id);
+    const targetId = isAdmin && requestedId ? requestedId : auth.user.id;
 
-    if (String(id) !== String(auth.user.id) && !isAdminRole(auth.user.role)) {
+    if (targetId !== auth.user.id && !isAdmin) {
       return NextResponse.json(
-        { success: false, error: "Yalnızca kendi üye sicil profilinizi güncelleyebilirsiniz." },
+        { error: "Başka bir üyenin profilini güncelleyemezsiniz." },
         { status: 403 }
       );
     }
 
-    const updates: {
-      full_name?: string;
-      title?: string | null;
-      phone?: string | null;
-      email?: string;
-    } = {};
-    if (full_name !== undefined) updates.full_name = full_name;
-    if (title !== undefined) updates.title = title;
-    if (phone !== undefined) updates.phone = phone;
-    if (email !== undefined) updates.email = email;
+    const updatePayload: TablesUpdate<"users"> = {};
+    if (body.full_name !== undefined && body.full_name.trim()) {
+      updatePayload.full_name = body.full_name.trim();
+    }
+    if (body.phone !== undefined) {
+      updatePayload.phone = body.phone ? body.phone.trim() : null;
+    }
+    if (body.title !== undefined) {
+      updatePayload.title = body.title ? body.title.trim() : null;
+    }
+    if (body.avatar_url !== undefined) {
+      updatePayload.avatar_url = body.avatar_url ? body.avatar_url.trim() : null;
+    }
+    if (body.password && body.password.trim()) {
+      if (body.password.trim().length < 8) {
+        return NextResponse.json(
+          { error: "Yeni şifreniz en az 8 karakter olmalıdır." },
+          { status: 400 }
+        );
+      }
+      updatePayload.password_hash = hashPassword(body.password.trim());
+    }
 
-    const { data, error } = await supabase
-      .from("users")
-      .update(updates)
-      .eq("id", Number(id))
-      .select("id, email, full_name, role, member_no, tc_no, phone, title, avatar_url, created_at")
-      .single();
-
-    if (error) {
+    if (Object.keys(updatePayload).length === 0) {
       return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
+        { error: "Güncellenecek alan belirtilmedi." },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      member: data,
-      message: "Üye bilgileriniz DERBİS ve portal siciline kaydedildi.",
+    const { data, error } = await supabaseServer
+      .from("users")
+      .update(updatePayload)
+      .eq("id", targetId)
+      .select(
+        "id, full_name, email, role, title, member_no, phone, avatar_url, created_at"
+      )
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    await recordAuditLog({
+      actorUserId: auth.user.id,
+      actorEmail: auth.user.email,
+      actorRole: auth.user.role,
+      action: "MEMBER_PROFILE_UPDATED",
+      target: data.email,
+      details: "Üye profil/şifre bilgileri güncellendi.",
+      status: "success",
     });
-  } catch (error: any) {
+
+    return NextResponse.json({ success: true, member: data, user: data });
+  } catch (err: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : "Geçersiz istek." },
+      { status: 400 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  const auth = await requireAuth(request);
+  if ("response" in auth) return auth.response;
+
+  try {
+    const body = (await request.json()) as {
+      action?: string;
+      dues_id?: number | string;
+      receipt_no?: string;
+      receipt_url?: string;
+    };
+
+    if (body.action === "submit_receipt") {
+      const duesId = parsePositiveId(body.dues_id);
+      if (!duesId || !body.receipt_no?.trim()) {
+        return NextResponse.json(
+          { error: "Aidat dönemi ve dekont/referans numarası zorunludur." },
+          { status: 400 }
+        );
+      }
+
+      const { data: dueRow } = await supabaseServer
+        .from("member_dues")
+        .select("*")
+        .eq("id", duesId)
+        .maybeSingle();
+
+      if (!dueRow) {
+        return NextResponse.json(
+          { error: "Aidat kaydı bulunamadı." },
+          { status: 404 }
+        );
+      }
+
+      if (dueRow.user_id !== auth.user.id && !isAdminRole(auth.user.role)) {
+        return NextResponse.json(
+          { error: "Bu aidat kaydına işlem yapma yetkiniz yok." },
+          { status: 403 }
+        );
+      }
+
+      const { data, error } = await supabaseServer
+        .from("member_dues")
+        .update({
+          receipt_no: body.receipt_no.trim(),
+          receipt_url: body.receipt_url?.trim() || dueRow.receipt_url,
+        })
+        .eq("id", duesId)
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        due: data,
+        message:
+          "Havale/EFT dekont bilginiz Saymanlık incelemesine iletildi.",
+      });
+    }
+
+    return NextResponse.json({ error: "Bilinmeyen işlem." }, { status: 400 });
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Geçersiz istek." },
+      { status: 400 }
     );
   }
 }

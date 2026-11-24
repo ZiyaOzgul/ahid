@@ -1,26 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [subError, setSubError] = useState("");
+  const [currentYear, setCurrentYear] = useState<number>(2026);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentYear(new Date().getFullYear());
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
-      try {
-        await fetch("/api/newsletter", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim() }),
-        });
-      } catch (err) {
-        console.error("Newsletter error:", err);
+    const cleaned = email.trim();
+    if (!cleaned) return;
+    setSubmitting(true);
+    setSubError("");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleaned }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setSubError(data.error || "Abonelik kaydedilemedi. Lütfen tekrar deneyin.");
+        setSubmitting(false);
+        return;
       }
       setSubscribed(true);
       setEmail("");
+    } catch {
+      setSubError("Bağlantı hatası oluştu. Lütfen daha sonra tekrar deneyin.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -51,25 +72,31 @@ export default function Footer() {
               <span>Bültenimize başarıyla kaydoldunuz. Teşekkür ederiz!</span>
             </div>
           ) : (
-            <form
-              onSubmit={handleSubscribe}
-              className="flex w-full md:w-auto max-w-md items-center gap-2.5"
-            >
-              <input
-                className="w-full md:w-80 px-4 py-2.5 rounded-xl bg-white border border-[#c4c6d3] text-[#101c2e] text-sm outline-none placeholder:text-[#747783] focus:ring-2 focus:ring-[#002869] focus:border-[#002869] shadow-2xs transition-all"
-                placeholder="E-posta adresinizi girin..."
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button
-                className="bg-[#002869] hover:bg-[#0b3d91] text-white font-semibold px-5 py-2.5 rounded-xl shadow-xs hover:shadow-md active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
-                type="submit"
+            <div className="w-full md:w-auto max-w-md">
+              <form
+                onSubmit={handleSubscribe}
+                className="flex w-full items-center gap-2.5"
               >
-                Kayıt Ol
-              </button>
-            </form>
+                <input
+                  className="w-full md:w-80 px-4 py-2.5 rounded-xl bg-white border border-[#c4c6d3] text-[#101c2e] text-sm outline-none placeholder:text-[#747783] focus:ring-2 focus:ring-[#002869] focus:border-[#002869] shadow-2xs transition-all"
+                  placeholder="E-posta adresinizi girin..."
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button
+                  disabled={submitting}
+                  className="bg-[#002869] hover:bg-[#0b3d91] disabled:opacity-60 text-white font-semibold px-5 py-2.5 rounded-xl shadow-xs hover:shadow-md active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
+                  type="submit"
+                >
+                  {submitting ? "Kaydediliyor..." : "Kayıt Ol"}
+                </button>
+              </form>
+              {subError && (
+                <p className="text-xs text-red-600 font-medium mt-2">{subError}</p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -80,8 +107,10 @@ export default function Footer() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center">
             <Link href="/" className="inline-block">
-              <img
+              <Image
                 alt="AHİD - Ankara Halkla İlişkiler Derneği"
+                width={180}
+                height={48}
                 className="h-12 w-auto object-contain"
                 src="/ahid-logo.png"
               />
@@ -93,7 +122,7 @@ export default function Footer() {
           <div className="flex items-center gap-2 pt-1">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-[#e7eeff] text-[#002869] border border-[#d7e3fc]">
               <span className="material-symbols-outlined text-sm text-[#225aba]">verified</span>
-              T.C. İçişleri Bakanlığı Akredite
+              1990&apos;dan Günümüze Mesleki Çatı
             </span>
           </div>
         </div>
@@ -202,7 +231,7 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="bg-[#e7eeff]/70 py-5 border-t border-[#d7e3fc]">
         <div className="max-w-[1680px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#475569] font-medium">
-          <div>© 1990 — 2026 Ankara Halkla İlişkiler Derneği (AHİD). Tüm hakları saklıdır.</div>
+          <div>© 1990 — {currentYear} Ankara Halkla İlişkiler Derneği (AHİD). Tüm hakları saklıdır.</div>
           <div className="flex flex-wrap items-center gap-5">
             <Link className="hover:text-[#002869] transition-colors" href="/kurumsal#kvkk">
               KVKK Aydınlatma

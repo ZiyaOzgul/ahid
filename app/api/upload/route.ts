@@ -1,113 +1,134 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import crypto from "node:crypto";
+import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { formatFileSize } from "@/lib/constants";
+import { inspectUploadBuffer } from "@/lib/image-meta";
+import { recordAuditLog } from "@/lib/audit";
+import { supabaseServer } from "@/lib/supabase-server";
 
-export async function POST(req: NextRequest) {
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+
+export async function POST(request: Request) {
+  const auth = await requireAdmin(request);
+  if ("response" in auth) return auth.response;
+
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    const bucket = (formData.get("bucket") as string) || "media";
-    const category = (formData.get("category") as string) || "Genel Kurumsal";
-    const altText = (formData.get("alt_text") as string) || "";
+    const formData = await request.formData();
+    const file = formData.get("file");
+    const requestedBucket = String(formData.get("bucket") || "media");
+    const category = String(formData.get("category") || "Genel");
+    const titleInput = String(formData.get("title") || "").trim();
+    const altText = String(formData.get("alt_text") || "").trim();
+    const isLiveRaw = formData.get("is_live");
+    const isLive = isLiveRaw === null ? true : String(isLiveRaw) !== "false";
 
-    const safeBucket = bucket === "cv-uploads" ? "cv-uploads" : "media";
-    if (safeBucket === "media") {
-      const auth = await requireAdmin(req);
-      if ("response" in auth) return auth.response;
-    }
-
-    if (!file) {
+    if (!file || !(file instanceof File)) {
       return NextResponse.json(
-        { success: false, error: "Yüklenecek dosya seçilmedi." },
+        { error: "Yüklenecek dosya seçilmedi." },
         { status: 400 }
       );
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) {
       return NextResponse.json(
-        { success: false, error: "Dosya boyutu en fazla 10 MB olabilir." },
+        { error: "Dosya boyutu 0 KB ile 10 MB arasında olmalıdır." },
         { status: 400 }
       );
     }
 
-    const ext = (file.name.split(".").pop() || "bin").toLowerCase();
-    const allowedExt =
-      safeBucket === "cv-uploads"
-        ? new Set(["pdf", "doc", "docx", "png", "jpg", "jpeg", "webp"])
-        : new Set(["png", "jpg", "jpeg", "webp", "svg", "gif", "pdf"]);
-    if (!allowedExt.has(ext)) {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const inspected = inspectUploadBuffer(buffer, { allowPdf: true });
+
+    if (!inspected.valid) {
       return NextResponse.json(
-        { success: false, error: "Desteklenmeyen dosya uzantısı." },
+        { error: inspected.error || "Geçersiz dosya biçimi." },
         { status: 400 }
       );
     }
-    const baseName = file.name
-      .replace(/\.[^/.]+$/, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]/g, "-")
-      .slice(0, 40);
-    const filePath = `${Date.now()}-${baseName}.${ext}`;
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
+    const bucket = requestedBucket === "cv-uploads" ? "cv-uploads" : "media";
+    const safeStoragePath = `${Date.now()}_${crypto
+      .randomBytes(6)
+      .toString("hex")}.${inspected.extension}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from(safeBucket)
-      .upload(filePath, buffer, {
-        contentType: file.type || "application/octet-stream",
-        upsert: true,
+    const { error: uploadError } = await supabaseServer.storage
+      .from(bucket)
+      .upload(safeStoragePath, buffer, {
+        contentType: inspected.mimeType,
+        upsert: false,
       });
 
     if (uploadError) {
       return NextResponse.json(
-        { success: false, error: uploadError.message },
+        { error: `Depolama hatası: ${uploadError.message}` },
         { status: 500 }
       );
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from(safeBucket)
-      .getPublicUrl(filePath);
+    const {
+      data: { publicUrl },
+    } = supabaseServer.storage.from(bucket).getPublicUrl(safeStoragePath);
 
-    let assetRecord = null;
-    if (safeBucket === "media") {
-      const sizeStr =
-        file.size > 1024 * 1024
-          ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-          : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+    const fileSize = formatFileSize(file.size);
+    const derivedTitle =
+      titleInput || file.name.replace(/\.[^/.]+$/, "") || safeStoragePath;
 
-      const { data: inserted } = await supabase
-        .from("media_assets")
-        .insert({
-          file_name: file.name,
-          title: file.name,
-          file_url: publicUrlData.publicUrl,
-          bucket: safeBucket,
-          format: ext.toUpperCase(),
-          file_size: sizeStr,
-          dimensions: "1920 × 1080",
-          aspect_ratio: "16:9",
-          category,
-          alt_text: altText || file.name,
-          usage_locations: [],
-          is_live: true,
-        })
-        .select("*")
-        .maybeSingle();
-      assetRecord = inserted;
+    const { data: asset, error: dbError } = await supabaseServer
+      .from("media_assets")
+      .insert({
+        file_name: file.name,
+        title: derivedTitle,
+        file_url: publicUrl,
+        bucket,
+        format: inspected.detectedType,
+        file_size: fileSize,
+        dimensions: inspected.dimensionsLabel,
+        aspect_ratio: inspected.aspectRatioLabel,
+        category,
+        alt_text: altText || derivedTitle,
+        is_live: isLive,
+        uploaded_by: auth.user.id,
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      return NextResponse.json(
+        { error: `Medya kaydı oluşturulamadı: ${dbError.message}` },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({
-      success: true,
-      url: publicUrlData.publicUrl,
-      path: filePath,
-      name: file.name,
-      size: file.size,
-      asset: assetRecord,
+    await recordAuditLog({
+      actorUserId: auth.user.id,
+      actorEmail: auth.user.email,
+      actorRole: auth.user.role,
+      action: "MEDIA_UPLOADED",
+      target: file.name,
+      details: `${inspected.detectedType} (${fileSize}, ${inspected.dimensionsLabel}) yüklendi.`,
+      status: "success",
     });
-  } catch (error: any) {
+
     return NextResponse.json(
-      { success: false, error: error.message },
+      {
+        success: true,
+        url: publicUrl,
+        file_format: inspected.detectedType,
+        file_size: fileSize,
+        dimensions: inspected.dimensionsLabel,
+        aspect_ratio: inspected.aspectRatioLabel,
+        asset,
+      },
+      { status: 201 }
+    );
+  } catch (err: unknown) {
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Dosya yükleme işlemi başarısız oldu.",
+      },
       { status: 500 }
     );
   }
